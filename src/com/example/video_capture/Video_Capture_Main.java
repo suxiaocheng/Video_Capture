@@ -8,6 +8,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -25,6 +26,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -44,9 +46,9 @@ public class Video_Capture_Main extends ActionBarActivity {
 	private int numOfCamera = 0;
 
 	private Camera mCamera;
-	private CameraPreview mPreview;
 
 	private MediaRecorder mMediaRecorder;
+	private CameraPreview mPreview;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -98,27 +100,31 @@ public class Video_Capture_Main extends ActionBarActivity {
 		@Override
 		public View onCreateView(LayoutInflater inflater, ViewGroup container,
 				Bundle savedInstanceState) {
+			Log.d(TAG, "onCreateView");
 			View rootView = inflater.inflate(
 					R.layout.fragment_video__capture__main, container, false);
 
-			/*
-			 * // Create an instance of Camera capture_main.mCamera =
-			 * getCameraInstance();
-			 * 
-			 * // Create our Preview view and set it as the content of our
-			 * activity. capture_main.mPreview = new CameraPreview(capture_main,
-			 * capture_main.mCamera); FrameLayout preview = (FrameLayout)
-			 * rootView.findViewById(R.id.camera_preview);
-			 * preview.addView(capture_main.mPreview);
-			 * 
-			 * // Add a listener to the Capture button Button captureButton =
-			 * (Button) rootView.findViewById(R.id.button_capture);
-			 * captureButton.setOnClickListener(new View.OnClickListener() {
-			 * 
-			 * @Override public void onClick(View v) { // get an image from the
-			 * camera capture_main.mCamera.takePicture(null, null,
-			 * capture_main.mPicture); } });
-			 */
+			mCamera = getCameraInstance();
+			mCamera.setDisplayOrientation(0);
+
+			// Create our Preview view and set it as the content of our
+			// activity.
+			mPreview = new CameraPreview(capture_main, mCamera);
+			FrameLayout preview = (FrameLayout) rootView
+					.findViewById(R.id.camera_preview);
+			preview.addView(mPreview);
+
+			// Add a listener to the Capture button
+			Button captureButton = (Button) rootView
+					.findViewById(R.id.button_capture);
+			captureButton.setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					// get an image from the camera
+					mCamera.takePicture(null, null, mPicture);
+				}
+			});
+
 			return rootView;
 		}
 	}
@@ -259,6 +265,7 @@ public class Video_Capture_Main extends ActionBarActivity {
 
 	private void releaseCamera() {
 		if (mCamera != null) {
+			mCamera.stopPreview();
 			mCamera.release(); // release the camera for other applications
 			mCamera = null;
 		}
@@ -269,7 +276,7 @@ public class Video_Capture_Main extends ActionBarActivity {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
 			// to determine if a camera is on the front or back of the device,
 			// and the orientation of the image
-			c.getCameraInfo(1, null);
+			Camera.getCameraInfo(1, null);
 		} else {
 			// get further information about its capabilities
 			c.getParameters();
@@ -283,10 +290,6 @@ public class Video_Capture_Main extends ActionBarActivity {
 
 			File pictureFile = getOutputMediaFile(MEDIA_TYPE_IMAGE);
 			if (pictureFile == null) {
-
-				// Log.d(TAG,
-				// "Error creating media file, check storage permissions: " +
-				// e.getMessage());
 				Log.d(TAG,
 						"Error creating media file, check storage permissions: \n");
 				return;
@@ -306,6 +309,7 @@ public class Video_Capture_Main extends ActionBarActivity {
 
 	@Override
 	protected void onResume() {
+		Log.d(TAG, "onResume");
 		super.onResume();
 		// if you are using MediaRecorder, reget it first
 		if (mMediaRecorder == null) {
@@ -315,30 +319,17 @@ public class Video_Capture_Main extends ActionBarActivity {
 		if (mCamera == null) {
 			// Create an instance of Camera
 			mCamera = getCameraInstance();
-
-			// Create our Preview view and set it as the content of our
-			// activity.
-			mPreview = new CameraPreview(this, mCamera);
-			FrameLayout preview = (FrameLayout) findViewById(R.id.camera_preview);
-			preview.addView(mPreview);
-
-			// Add a listener to the Capture button
-			Button captureButton = (Button) findViewById(R.id.button_capture);
-			captureButton.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					// get an image from the camera
-					mCamera.takePicture(null, null, mPicture);
-				}
-			});
+			mCamera.setDisplayOrientation(0);
 		}
 	}
 
 	@Override
 	protected void onPause() {
+		Log.d(TAG, "onPause");
 		super.onPause();
 		releaseMediaRecorder(); // if you are using MediaRecorder, release it
 								// first
+		//preview.removeView(mPreview);
 		releaseCamera(); // release the camera immediately on pause event
 	}
 
@@ -348,6 +339,41 @@ public class Video_Capture_Main extends ActionBarActivity {
 			mMediaRecorder.release(); // release the recorder object
 			mMediaRecorder = null;
 			mCamera.lock(); // lock camera for later use
+		}
+	}
+
+	@TargetApi(Build.VERSION_CODES.GINGERBREAD)
+	public static void setCameraDisplayOrientation(Activity activity,
+			int cameraId, android.hardware.Camera camera) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+			android.hardware.Camera.CameraInfo info = new android.hardware.Camera.CameraInfo();
+			android.hardware.Camera.getCameraInfo(cameraId, info);
+			int rotation = activity.getWindowManager().getDefaultDisplay()
+					.getRotation();
+			int degrees = 0;
+			switch (rotation) {
+			case Surface.ROTATION_0:
+				degrees = 0;
+				break;
+			case Surface.ROTATION_90:
+				degrees = 90;
+				break;
+			case Surface.ROTATION_180:
+				degrees = 180;
+				break;
+			case Surface.ROTATION_270:
+				degrees = 270;
+				break;
+			}
+
+			int result;
+			if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+				result = (info.orientation + degrees) % 360;
+				result = (360 - result) % 360; // compensate the mirror
+			} else { // back-facing
+				result = (info.orientation - degrees + 360) % 360;
+			}
+			camera.setDisplayOrientation(result);
 		}
 	}
 }
