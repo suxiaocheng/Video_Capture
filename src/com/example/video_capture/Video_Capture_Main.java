@@ -48,7 +48,6 @@ public class Video_Capture_Main extends ActionBarActivity {
 
 	private Camera mCamera;
 
-	private MediaRecorder mMediaRecorder;
 	private CameraPreview mPreview;
 
 	/* reverse for future, and this value can be change */
@@ -109,7 +108,7 @@ public class Video_Capture_Main extends ActionBarActivity {
 					R.layout.fragment_video__capture__main, container, false);
 
 			mCamera = getCameraInstance();
-			mCamera.setDisplayOrientation(90);
+			mCamera.setDisplayOrientation(0);
 
 			// Create our Preview view and set it as the content of our
 			// activity.
@@ -132,7 +131,7 @@ public class Video_Capture_Main extends ActionBarActivity {
 						new Thread(new Runnable() {
 							public void run() {
 								try {
-									Thread.sleep(picturePreviewTime*1000);
+									Thread.sleep(picturePreviewTime * 1000);
 								} catch (InterruptedException e) {
 									// TODO Auto-generated catch block
 									e.printStackTrace();
@@ -150,6 +149,9 @@ public class Video_Capture_Main extends ActionBarActivity {
 
 	/** Called when the user touches the button */
 	public void startInternelCameraCapturePicture(View view) {
+
+		releaseCamera(); // release the camera immediately on pause event
+
 		// create Intent to take a picture and return control to the calling
 		// application
 		Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -164,7 +166,10 @@ public class Video_Capture_Main extends ActionBarActivity {
 
 	}
 
-	public void startInternelCameraCaptureVideoI(View view) {
+	public void startInternelCameraCaptureVideo(View view) {
+
+		releaseCamera(); // release the camera immediately on pause event
+
 		// create new Intent
 		Intent intent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
 
@@ -330,37 +335,40 @@ public class Video_Capture_Main extends ActionBarActivity {
 
 	@Override
 	protected void onResume() {
+		int retryCount = 0;
 		Log.d(TAG, "onResume");
-		super.onResume();
-		// if you are using MediaRecorder, reget it first
-		if (mMediaRecorder == null) {
-
-		}
 		// reget the camera immediately on pause event
 		if (mCamera == null) {
 			// Create an instance of Camera
-			mCamera = getCameraInstance();
-			mCamera.setDisplayOrientation(90);
+			/* Try get the Camera dump in the UI thread */
+			while (mCamera == null) {
+				mCamera = getCameraInstance();
+				try {
+					//wait(100);
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				if(++retryCount > 20){
+					Log.d(TAG, "Open Camera fail");
+					finish();
+				}
+			}
+			if(mCamera != null){
+				mCamera.setDisplayOrientation(0);
+				mCamera.startPreview();
+				Log.d(TAG, "onResume sucessfully");
+			}
 		}
+		super.onResume();
 	}
 
 	@Override
 	protected void onPause() {
 		Log.d(TAG, "onPause");
 		super.onPause();
-		releaseMediaRecorder(); // if you are using MediaRecorder, release it
-								// first
-		// preview.removeView(mPreview);
 		releaseCamera(); // release the camera immediately on pause event
-	}
-
-	private void releaseMediaRecorder() {
-		if (mMediaRecorder != null) {
-			mMediaRecorder.reset(); // clear recorder configuration
-			mMediaRecorder.release(); // release the recorder object
-			mMediaRecorder = null;
-			mCamera.lock(); // lock camera for later use
-		}
 	}
 
 	@TargetApi(Build.VERSION_CODES.GINGERBREAD)

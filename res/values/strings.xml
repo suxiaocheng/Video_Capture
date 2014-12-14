@@ -4,8 +4,9 @@
     <string name="app_name">Video_Capture</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
-    <string name="capture_image_using_internel_camera">Capture Picture</string>
-    <string name="capture_video_using_internel_camera">Capture Video</string>
-    <string name="capture_image_using_preview">Capture Preview</string>
+    <string name="capture_image_using_internel_camera">Capture Picture_I</string>
+    <string name="capture_video_using_internel_camera">Capture Video_I</string>
+    <string name="capture_image_using_preview">Capture Picture</string>
+    <string name="capture_video_using_preview">Capture Video</string>
 
 </resources>
