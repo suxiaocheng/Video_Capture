@@ -13,6 +13,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.hardware.Camera;
+import android.hardware.Camera.Parameters;
 import android.hardware.Camera.PictureCallback;
 import android.media.MediaRecorder;
 import android.net.Uri;
@@ -49,6 +50,9 @@ public class Video_Capture_Main extends ActionBarActivity {
 
 	private MediaRecorder mMediaRecorder;
 	private CameraPreview mPreview;
+
+	/* reverse for future, and this value can be change */
+	private int picturePreviewTime = 0x02;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -105,11 +109,11 @@ public class Video_Capture_Main extends ActionBarActivity {
 					R.layout.fragment_video__capture__main, container, false);
 
 			mCamera = getCameraInstance();
-			mCamera.setDisplayOrientation(0);
+			mCamera.setDisplayOrientation(90);
 
 			// Create our Preview view and set it as the content of our
 			// activity.
-			mPreview = new CameraPreview(capture_main, mCamera);
+			mPreview = new CameraPreview(capture_main);
 			FrameLayout preview = (FrameLayout) rootView
 					.findViewById(R.id.camera_preview);
 			preview.addView(mPreview);
@@ -122,6 +126,21 @@ public class Video_Capture_Main extends ActionBarActivity {
 				public void onClick(View v) {
 					// get an image from the camera
 					mCamera.takePicture(null, null, mPicture);
+					if (picturePreviewTime == 0x0) {
+						mCamera.startPreview();
+					} else {
+						new Thread(new Runnable() {
+							public void run() {
+								try {
+									Thread.sleep(picturePreviewTime*1000);
+								} catch (InterruptedException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+								mCamera.startPreview();
+							}
+						}).start();
+					}
 				}
 			});
 
@@ -260,6 +279,7 @@ public class Video_Capture_Main extends ActionBarActivity {
 		} catch (Exception e) {
 			// Camera is not available (in use or does not exist)
 		}
+		CameraPreview.UpdateCamera(c);
 		return c; // returns null if camera is unavailable
 	}
 
@@ -278,8 +298,9 @@ public class Video_Capture_Main extends ActionBarActivity {
 			// and the orientation of the image
 			Camera.getCameraInfo(1, null);
 		} else {
+			Parameters cameraParameters;
 			// get further information about its capabilities
-			c.getParameters();
+			cameraParameters = c.getParameters();
 		}
 	}
 
@@ -319,7 +340,7 @@ public class Video_Capture_Main extends ActionBarActivity {
 		if (mCamera == null) {
 			// Create an instance of Camera
 			mCamera = getCameraInstance();
-			mCamera.setDisplayOrientation(0);
+			mCamera.setDisplayOrientation(90);
 		}
 	}
 
@@ -329,7 +350,7 @@ public class Video_Capture_Main extends ActionBarActivity {
 		super.onPause();
 		releaseMediaRecorder(); // if you are using MediaRecorder, release it
 								// first
-		//preview.removeView(mPreview);
+		// preview.removeView(mPreview);
 		releaseCamera(); // release the camera immediately on pause event
 	}
 

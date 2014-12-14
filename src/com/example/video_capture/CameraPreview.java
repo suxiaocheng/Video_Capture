@@ -14,12 +14,11 @@ public class CameraPreview extends SurfaceView implements
 	private static final String TAG = "CameraPreview";
 
 	private SurfaceHolder mHolder;
-	private Camera mCamera;
+	private static Camera mCamera = null;
 
-	public CameraPreview(Context context, Camera camera) {
+	public CameraPreview(Context context) {
 		super(context);
-		mCamera = camera;
-		
+
 		Log.d(TAG, "CameraPreview");
 
 		// Install a SurfaceHolder.Callback so we get notified when the
@@ -30,10 +29,21 @@ public class CameraPreview extends SurfaceView implements
 		mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 	}
 
+	/*
+	 * When reopen the camera, is needed to update the mCamera value to the new
+	 * one, or the system will dump
+	 */
+	public static void UpdateCamera(Camera camera) {
+		mCamera = camera;
+	}
+
 	public void surfaceCreated(SurfaceHolder holder) {
 		// The Surface has been created, now tell the camera where to draw the
 		// preview.
 		Log.d(TAG, "surfaceCreated");
+		if (mCamera == null) {
+			return;
+		}
 		try {
 			mCamera.setPreviewDisplay(holder);
 			mCamera.startPreview();
@@ -45,14 +55,14 @@ public class CameraPreview extends SurfaceView implements
 	public void surfaceDestroyed(SurfaceHolder holder) {
 		// empty. Take care of releasing the Camera preview in your activity.
 		Log.d(TAG, "surfaceDestroyed");
-		holder.removeCallback(this);
+		// holder.removeCallback(this);
 	}
 
 	public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
 		// If your preview can change or rotate, take care of those events here.
 		// Make sure to stop the preview before resizing or reformatting it.
 
-		if (mHolder.getSurface() == null) {
+		if ((mHolder.getSurface() == null) || (mCamera == null)) {
 			// preview surface does not exist
 			return;
 		}
