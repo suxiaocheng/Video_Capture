@@ -44,6 +44,9 @@ public class CameraPreview extends SurfaceView implements
 		if (mCamera == null) {
 			return;
 		}
+		mHolder.addCallback(this);
+		// deprecated setting, but required on Android versions prior to 3.0
+		mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 		try {
 			mCamera.setPreviewDisplay(holder);
 			mCamera.startPreview();
@@ -54,8 +57,7 @@ public class CameraPreview extends SurfaceView implements
 
 	public void surfaceDestroyed(SurfaceHolder holder) {
 		// empty. Take care of releasing the Camera preview in your activity.
-		Log.d(TAG, "surfaceDestroyed");
-		// holder.removeCallback(this);
+		Log.d(TAG, "surfaceDestroyed");		
 		mCamera = null;
 	}
 
