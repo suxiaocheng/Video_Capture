@@ -15,6 +15,7 @@ import android.content.pm.PackageManager;
 import android.hardware.Camera;
 import android.hardware.Camera.Parameters;
 import android.hardware.Camera.PictureCallback;
+import android.hardware.Camera.Size;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
 import android.net.Uri;
@@ -314,20 +315,102 @@ public class CameraOperation {
 		reGetCameraWithRetry();
 	}
 	
-	@TargetApi(Build.VERSION_CODES.GINGERBREAD)
+	/* Checks if external storage is available for read and write */
+	public boolean isExternalStorageWritable() {
+	    String state = Environment.getExternalStorageState();
+	    if (Environment.MEDIA_MOUNTED.equals(state)) {
+	        return true;
+	    }
+	    return false;
+	}
+
+	/* Checks if external storage is available to at least read */
+	public boolean isExternalStorageReadable() {
+	    String state = Environment.getExternalStorageState();
+	    if (Environment.MEDIA_MOUNTED.equals(state) ||
+	        Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+	        return true;
+	    }
+	    return false;
+	}
+	
+	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
 	public void getCameraFeatrues(Camera c) {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+		//if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
 			// to determine if a camera is on the front or back of the device,
 			// and the orientation of the image
-			Camera.getCameraInfo(1, null);
-		} else {
+		//	Camera.getCameraInfo(1, null);
+		//} else 
+		{
+			
+			/* Check for externel storage writeable */
+			if(isExternalStorageWritable() == false){
+				return;
+			}
+			
+			// To be safe, you should check that the SDCard is mounted
+			// using Environment.getExternalStorageState() before doing this.
+			File mediaStorageDir = new File(
+					Environment
+							.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+					"MyCameraApp");
+			// This location works best if you want the created images to be shared
+			// between applications and persist after your app has been uninstalled.
+
+			// Create the storage directory if it does not exist
+			if (!mediaStorageDir.exists()) {
+				if (!mediaStorageDir.mkdirs()) {
+					Log.d("MyCameraApp", "failed to create directory");
+					return;
+				}
+			}
+			
+			File infoFile;
+			infoFile = new File(mediaStorageDir.getPath() + File.separator + "info.txt");
+			
+			if(infoFile.exists()){
+				return;
+			}
+			
 			Parameters cameraParameters;
 			// get further information about its capabilities
 			cameraParameters = c.getParameters();
 			
+			List<int[]> previewFpsRange;
+			List<Size> videoSizes;
+			
 			List<String> focusModes = cameraParameters.getSupportedFocusModes();
 			if (focusModes.contains(Camera.Parameters.FOCUS_MODE_AUTO)) {
 			  // Autofocus mode is supported
+			}
+			List<String> antiBanding = cameraParameters.getSupportedAntibanding();
+			List<String> colorEffects = cameraParameters.getSupportedColorEffects();
+			List<String> flashModes = cameraParameters.getSupportedFlashModes();
+			List<Size> jpegThumbnailSizes = cameraParameters.getSupportedJpegThumbnailSizes();
+			List<Integer> pictureFormats = cameraParameters.getSupportedPictureFormats();
+			List<Integer> previewFormats = cameraParameters.getSupportedPreviewFormats();
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+				previewFpsRange = cameraParameters.getSupportedPreviewFpsRange();
+			}else{
+				previewFpsRange = null;
+			}
+			List<Integer> previewFrameRates = cameraParameters.getSupportedPreviewFrameRates();
+			List<Size> previewSizes = cameraParameters.getSupportedPreviewSizes();
+			List<String> sceneModes = cameraParameters.getSupportedSceneModes();
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+				videoSizes = cameraParameters.getSupportedVideoSizes();
+			}else{
+				videoSizes = null;
+			}
+			List<String> witeBalance = cameraParameters.getSupportedWhiteBalance();
+			
+			/* dump all the information to a file */
+			try {
+				FileOutputStream fOut = new FileOutputStream(infoFile);
+				//fOut.write(buffer);
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 		}
 	}
