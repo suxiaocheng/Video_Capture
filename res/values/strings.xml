@@ -8,5 +8,8 @@
     <string name="capture_video_using_internel_camera">Capture Video_I</string>
     <string name="capture_image_using_preview">Capture Picture</string>
     <string name="capture_video_using_preview">Capture Video</string>
+    <string name="pref_focusMode">Focus Mode</string>
+    <string name="pref_focusModeTitle">Focus Mode</string>
+    
 
 </resources>

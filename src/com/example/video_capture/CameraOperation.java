@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 import android.annotation.TargetApi;
@@ -67,7 +68,7 @@ public class CameraOperation {
 		// .get(CamcorderProfile.QUALITY_HIGH));
 
 		filename = getOutputMediaFile(MEDIA_TYPE_VIDEO).toString();
-		if(filename == null){
+		if (filename == null) {
 			/* Create the file fail */
 			return false;
 		}
@@ -170,6 +171,14 @@ public class CameraOperation {
 				mCamera.setDisplayOrientation(0);
 				mCamera.startPreview();
 				Log.d(TAG, "onResume sucessfully");
+			}
+		}
+		if (mCamera != null) {
+			try {
+				getCameraFeatrues(mCamera);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 		}
 		return (mCamera == null) ? false : true;
@@ -314,48 +323,73 @@ public class CameraOperation {
 		releaseCamera();
 		reGetCameraWithRetry();
 	}
-	
+
 	/* Checks if external storage is available for read and write */
 	public boolean isExternalStorageWritable() {
-	    String state = Environment.getExternalStorageState();
-	    if (Environment.MEDIA_MOUNTED.equals(state)) {
-	        return true;
-	    }
-	    return false;
+		String state = Environment.getExternalStorageState();
+		if (Environment.MEDIA_MOUNTED.equals(state)) {
+			return true;
+		}
+		return false;
 	}
 
 	/* Checks if external storage is available to at least read */
 	public boolean isExternalStorageReadable() {
-	    String state = Environment.getExternalStorageState();
-	    if (Environment.MEDIA_MOUNTED.equals(state) ||
-	        Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
-	        return true;
-	    }
-	    return false;
+		String state = Environment.getExternalStorageState();
+		if (Environment.MEDIA_MOUNTED.equals(state)
+				|| Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+			return true;
+		}
+		return false;
 	}
-	
+
+	public <T> byte[] convertList2String(List<T> dat, String Title) {
+		String str = Title;
+		int size;
+		int count = 0;
+		
+		if(dat != null){
+			size = dat.size();
+			for (count = 0; count < size; count++) {
+				str += ":";
+				str += dat.get(count);
+			}
+		}
+		if(count == 0){
+			str += ":Unspport Feature";
+		}
+		
+		str += "\n";
+
+		return str.getBytes();
+	}
+
 	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
-	public void getCameraFeatrues(Camera c) {
-		//if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-			// to determine if a camera is on the front or back of the device,
-			// and the orientation of the image
-		//	Camera.getCameraInfo(1, null);
-		//} else 
+	public void getCameraFeatrues(Camera c) throws IOException {
+		byte[] string_info;
+		FileOutputStream fOut = null;
+		// if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+		// to determine if a camera is on the front or back of the device,
+		// and the orientation of the image
+		// Camera.getCameraInfo(1, null);
+		// } else
 		{
-			
+
 			/* Check for externel storage writeable */
-			if(isExternalStorageWritable() == false){
+			if (isExternalStorageWritable() == false) {
 				return;
 			}
-			
+
 			// To be safe, you should check that the SDCard is mounted
 			// using Environment.getExternalStorageState() before doing this.
 			File mediaStorageDir = new File(
 					Environment
 							.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
 					"MyCameraApp");
-			// This location works best if you want the created images to be shared
-			// between applications and persist after your app has been uninstalled.
+			// This location works best if you want the created images to be
+			// shared
+			// between applications and persist after your app has been
+			// uninstalled.
 
 			// Create the storage directory if it does not exist
 			if (!mediaStorageDir.exists()) {
@@ -364,51 +398,114 @@ public class CameraOperation {
 					return;
 				}
 			}
-			
+
 			File infoFile;
-			infoFile = new File(mediaStorageDir.getPath() + File.separator + "info.txt");
-			
-			if(infoFile.exists()){
-				return;
+			infoFile = new File(mediaStorageDir.getPath() + File.separator
+					+ "info.txt");
+
+			if (infoFile.exists()) {
+				infoFile.delete();
+				//return;
 			}
-			
-			Parameters cameraParameters;
-			// get further information about its capabilities
-			cameraParameters = c.getParameters();
-			
-			List<int[]> previewFpsRange;
-			List<Size> videoSizes;
-			
-			List<String> focusModes = cameraParameters.getSupportedFocusModes();
-			if (focusModes.contains(Camera.Parameters.FOCUS_MODE_AUTO)) {
-			  // Autofocus mode is supported
-			}
-			List<String> antiBanding = cameraParameters.getSupportedAntibanding();
-			List<String> colorEffects = cameraParameters.getSupportedColorEffects();
-			List<String> flashModes = cameraParameters.getSupportedFlashModes();
-			List<Size> jpegThumbnailSizes = cameraParameters.getSupportedJpegThumbnailSizes();
-			List<Integer> pictureFormats = cameraParameters.getSupportedPictureFormats();
-			List<Integer> previewFormats = cameraParameters.getSupportedPreviewFormats();
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-				previewFpsRange = cameraParameters.getSupportedPreviewFpsRange();
-			}else{
-				previewFpsRange = null;
-			}
-			List<Integer> previewFrameRates = cameraParameters.getSupportedPreviewFrameRates();
-			List<Size> previewSizes = cameraParameters.getSupportedPreviewSizes();
-			List<String> sceneModes = cameraParameters.getSupportedSceneModes();
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-				videoSizes = cameraParameters.getSupportedVideoSizes();
-			}else{
-				videoSizes = null;
-			}
-			List<String> witeBalance = cameraParameters.getSupportedWhiteBalance();
 			
 			/* dump all the information to a file */
 			try {
-				FileOutputStream fOut = new FileOutputStream(infoFile);
-				//fOut.write(buffer);
+				fOut = new FileOutputStream(infoFile);
 			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+			Parameters cameraParameters;
+			// get further information about its capabilities
+			cameraParameters = c.getParameters();
+
+			List<int[]> previewFpsRange;
+			List<Size> videoSizes;
+
+			List<String> focusModes = cameraParameters.getSupportedFocusModes();
+
+			string_info = convertList2String(focusModes, "focusModes");
+			fOut.write(string_info);
+
+			if (focusModes.contains(Camera.Parameters.FOCUS_MODE_AUTO)) {
+				// Autofocus mode is supported
+			}
+			List<String> antiBanding = cameraParameters
+					.getSupportedAntibanding();
+			string_info = convertList2String(antiBanding, "antiBanding");
+			fOut.write(string_info);
+			
+			List<String> colorEffects = cameraParameters
+					.getSupportedColorEffects();
+			string_info = convertList2String(colorEffects, "colorEffects");
+			fOut.write(string_info);
+			
+			List<String> flashModes = cameraParameters.getSupportedFlashModes();
+			string_info = convertList2String(flashModes, "flashModes");
+			fOut.write(string_info);
+			
+			List<Size> jpegThumbnailSizes = cameraParameters
+					.getSupportedJpegThumbnailSizes();
+			string_info = convertList2String(jpegThumbnailSizes, "jpegThumbnailSizes");
+			fOut.write(string_info);
+			
+			List<Integer> pictureFormats = cameraParameters
+					.getSupportedPictureFormats();
+			string_info = convertList2String(pictureFormats, "pictureFormats");
+			fOut.write(string_info);
+			
+			List<Integer> previewFormats = cameraParameters
+					.getSupportedPreviewFormats();
+			string_info = convertList2String(previewFormats, "previewFormats");
+			fOut.write(string_info);
+			
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+				previewFpsRange = cameraParameters
+						.getSupportedPreviewFpsRange();
+			} else {
+				previewFpsRange = null;
+			}
+			string_info = convertList2String(previewFpsRange, "previewFpsRange");
+			fOut.write(string_info);
+			
+			List<Integer> previewFrameRates = cameraParameters
+					.getSupportedPreviewFrameRates();
+			string_info = convertList2String(previewFrameRates, "previewFrameRates");
+			fOut.write(string_info);
+			
+			List<Size> previewSizes = cameraParameters
+					.getSupportedPreviewSizes();
+			string_info = convertList2String(previewSizes, "previewSizes");
+			fOut.write(string_info);
+			
+			List<String> sceneModes = cameraParameters.getSupportedSceneModes();
+			string_info = convertList2String(sceneModes, "sceneModes");
+			fOut.write(string_info);
+			
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+				videoSizes = cameraParameters.getSupportedVideoSizes();
+			} else {
+				videoSizes = null;
+			}
+			string_info = convertList2String(videoSizes, "videoSizes");
+			fOut.write(string_info);
+			
+			List<String> witeBalance = cameraParameters
+					.getSupportedWhiteBalance();
+			string_info = convertList2String(witeBalance, "witeBalance");
+			fOut.write(string_info);
+
+			try {
+				fOut.flush();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+			try {
+				fOut.close();
+			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
