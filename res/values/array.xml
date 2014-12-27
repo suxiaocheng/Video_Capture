@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string-array name="pref_focusModeTitle_values">
+        <item name="Auto Focus">@string/array_auto_focus</item>
+        <item name="Macro Focus">@string/array_auto_focus</item>
+        <item name="Infinity Focus">@string/array_auto_focus</item>
+    </string-array>
+
+</resources>

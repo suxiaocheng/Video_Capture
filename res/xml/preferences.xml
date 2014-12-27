@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
 
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <ListPreference
-        android:key="pref_focusMode"
-        android:title="@string/pref_focusMode"
+        android:defaultValue="@string/pref_focusModeTitle_default"
         android:dialogTitle="@string/pref_focusModeTitle"
-        android:entries="@array/pref_focusModeTitle_entries"
+        android:entries="@array/pref_focusModeTitle_values"
         android:entryValues="@array/pref_focusModeTitle_values"
-        android:defaultValue="@string/pref_focusModeTitle_default" />
+        android:key="pref_focusMode"
+        android:title="@string/pref_focusMode" />
+
 </PreferenceScreen>

@@ -34,7 +34,7 @@ public class CameraOperation {
 
 	private Camera mCamera;
 	public MediaRecorder mMediaRecorder;
-
+	
 	private static int numOfCamera = 0;
 
 	private CameraPreview mPreview;
@@ -404,8 +404,8 @@ public class CameraOperation {
 					+ "info.txt");
 
 			if (infoFile.exists()) {
-				infoFile.delete();
-				//return;
+				//infoFile.delete();
+				return;
 			}
 			
 			/* dump all the information to a file */

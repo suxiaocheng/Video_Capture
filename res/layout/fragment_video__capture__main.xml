@@ -8,27 +8,53 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.example.video_capture.Video_Capture_Main$PlaceholderFragment" >
-    
-    <FrameLayout
-        android:id="@+id/camera_preview"
+
+    <RelativeLayout
+        android:id="@+id/preview"
         android:layout_width="fill_parent"
         android:layout_height="match_parent"
-        android:layout_weight="3" />
+        android:layout_weight="3" >
+
+        <FrameLayout
+            android:id="@+id/camera_preview"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent" >
+        </FrameLayout>
+
+        <TextView
+            android:id="@+id/capture_info_delaytime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:text="TextView"
+            android:visibility="invisible" />
+        
+        <TextView
+            android:id="@+id/capture_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:text="TextView"
+            android:visibility="invisible" />
+
+    </RelativeLayout>
 
     <LinearLayout
         android:id="@+id/layout_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_toRightOf="@id/camera_preview"
-        android:orientation="vertical"
-        android:layout_weight="1" >
-        
+        android:layout_weight="1"
+        android:orientation="vertical" >
+
         <Button
             android:id="@+id/button_capture"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/capture_image_using_preview" />
-        
+
         <Button
             android:id="@+id/button_capture_video"
             android:layout_width="wrap_content"
@@ -48,7 +74,6 @@
             android:layout_height="wrap_content"
             android:onClick="startInternelCameraCaptureVideo"
             android:text="@string/capture_video_using_internel_camera" />
-        
     </LinearLayout>
 
 </LinearLayout>
