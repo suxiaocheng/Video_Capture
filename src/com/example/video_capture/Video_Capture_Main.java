@@ -254,18 +254,18 @@ public class Video_Capture_Main extends ActionBarActivity {
 			currentTime = new Time();
 			startupTime.setToNow();
 
-			captureTime = cp * 1000;
+			captureTime = cp;
 		}
 
 		@Override
 		protected String doInBackground(Integer... params) {
-			int time_capture;
+			int time_interval;
 
 			do {
 				currentTime.setToNow();
-				time_capture = (int) ((currentTime.toMillis(true) - startupTime
+				time_interval = (int) ((currentTime.toMillis(true) - startupTime
 						.toMillis(true)) / 1000);
-				publishProgress(time_capture);
+				publishProgress(time_interval);
 				try {
 					Thread.sleep(1000);
 				} catch (InterruptedException e) {
@@ -276,7 +276,7 @@ public class Video_Capture_Main extends ActionBarActivity {
 				if (isRecording == PROCESS_FREE) {
 					break;
 				}
-			} while ((captureTime == 0) || (captureTime > time_capture));
+			} while ((captureTime == 0) || (captureTime > time_interval));
 
 			return "Executed";
 		}

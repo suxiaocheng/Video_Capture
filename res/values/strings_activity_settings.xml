@@ -13,12 +13,12 @@
      <!-- Capture Video delay to start settings -->
     <string name="pref_start_capture_time_title">Dealy to start capture video</string>
     <string name="pref_start_capture_time_dialog_title">Dealy to start capture video(minute)</string>
-    <string name="pref_default_start_capture_time">10</string>
+    <string name="pref_default_start_capture_time">5</string>
     
     <!-- Capture Video time settings -->
     <string name="pref_capture_time_title">Time setting to capture video</string>
     <string name="pref_capture_time_dialog_title">Time setting to capture video(minute)</string>
-    <string name="pref_default_capture_time">20</string>
+    <string name="pref_default_capture_time">10</string>
 
     <!-- Capture Video Quility settings -->
     <string name="pref_capture_video_quility_header">Video Quality</string>

@@ -22,8 +22,9 @@ public class CameraSetting {
 		this.context = con;
 		preference = PreferenceManager.getDefaultSharedPreferences(context);
 		
-		preference.edit().clear();
-		preference.edit().commit();
+		if(preference.edit().clear().commit() == false){
+			Log.d(TAG, "Fail to clear the preference");
+		}
 		
 		PreferenceManager.setDefaultValues(context, R.xml.pref_general,
 				DEBUG_MODE);
