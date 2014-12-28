@@ -1,5 +1,7 @@
 package com.example.video_capture;
 
+import java.util.concurrent.locks.ReentrantLock;
+
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -50,9 +52,11 @@ public class Video_Capture_Main extends ActionBarActivity {
 	/* control display how long has been capture */
 	private TextView captureTimeTW;
 
+	/* Camera lock use for sync */
+	private ReentrantLock captureCameraLock;
+
 	/* Screen wakeup lock */
 	protected PowerManager.WakeLock mWakeLock;
-	private boolean screenLock;
 
 	public CameraSetting cameraSetting;
 
@@ -65,7 +69,7 @@ public class Video_Capture_Main extends ActionBarActivity {
 		super.onCreate(savedInstanceState);
 
 		// remove title
-		requestWindowFeature(Window.FEATURE_NO_TITLE);
+		// requestWindowFeature(Window.FEATURE_NO_TITLE);
 		// getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
 		// WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
@@ -85,6 +89,7 @@ public class Video_Capture_Main extends ActionBarActivity {
 		cameraSetting = new CameraSetting(this.getBaseContext());
 
 		isRecording = PROCESS_FREE;
+		captureCameraLock = new ReentrantLock();
 	}
 
 	@Override
@@ -114,6 +119,10 @@ public class Video_Capture_Main extends ActionBarActivity {
 	public class PlaceholderFragment extends Fragment {
 
 		Video_Capture_Main capture_main;
+
+		public PlaceholderFragment() {
+			Log.d(TAG, "capture_main:" + capture_main == null ? "NULL" : "OK");
+		}
 
 		public PlaceholderFragment(Video_Capture_Main main) {
 			capture_main = main;
@@ -156,53 +165,105 @@ public class Video_Capture_Main extends ActionBarActivity {
 			captureVideoButton.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
+					if (captureCameraLock.tryLock() == false) {
+						return;
+					}
 					if (isRecording == PROCESS_CAPTURE) {
 						isRecording = PROCESS_FREE;
 
 						cameraOperation.stopVideoCapture();
 
-						// inform the user that recording has stopped
-						// setCaptureButtonText("Capture");
-						captureVideoButton.setText("Capture Video");
-
-						/* Enable other button */
-						captureVideoButtonI.setEnabled(true);
-						captureButtonI.setEnabled(true);
-						captureButton.setEnabled(true);
-
-						if (cameraSetting.GetScreenLock() == false) {
-							ReleaseScreenOnLock();
-						}
 					} else if (isRecording == PROCESS_FREE) {
+						if (cameraSetting.GetScreenLock() == false) {
+							GetScreenOnLock();
+						}
+
 						int delay_time = cameraSetting.GetDelayCaptureTime();
 						if (delay_time > 0) {
-							captureVideoButton.setText("Capture Cancel");
 							isRecording = PROCESS_DELAY;
-							CameraDealyOperation asyncTask = new CameraDealyOperation();
+							CameraDelayOperation asyncTask = new CameraDelayOperation();
 							asyncTask.execute(delay_time);
 						} else {
-							startVideoRecording();
+							isRecording = PROCESS_CAPTURE;
+							if (startVideoRecording() == false) {
+								isRecording = PROCESS_FREE;
+							}
 						}
 					} else if (isRecording == PROCESS_DELAY) {
 						isRecording = PROCESS_FREE;
-						captureVideoButton.setText("Capture Video");
 					}
+
+					captureCameraLock.unlock();
+					capture_main.setButtonStatus(isRecording);
 				}
+
 			});
 
 			return rootView;
 		}
 	}
 
-	private class CameraDealyOperation extends
+	private void setButtonStatus(int status) {
+		/* Reset the UI to the right state */
+		if (status == PROCESS_FREE) {
+			/* Enable other button */
+			captureVideoButtonI.setEnabled(true);
+			captureButtonI.setEnabled(true);
+			captureButton.setEnabled(true);
+
+			captureVideoButton.setText("Capture Video");
+
+			/* Release the screen lock */
+			if (cameraSetting.GetScreenLock() == false) {
+				ReleaseScreenOnLock();
+			}
+
+		} else if (status == PROCESS_CAPTURE) {
+			/* Enable other button */
+			captureVideoButtonI.setEnabled(false);
+			captureButtonI.setEnabled(false);
+			captureButton.setEnabled(false);
+
+			captureVideoButton.setText("Capture Stop");
+		} else if (status == PROCESS_DELAY) {
+			/* Enable other button */
+			captureVideoButtonI.setEnabled(false);
+			captureButtonI.setEnabled(false);
+			captureButton.setEnabled(false);
+
+			captureVideoButton.setText("Capture Cancel");
+		} else {
+			Log.d(TAG, "setButtonStatus: Unknow status");
+		}
+	}
+
+	private class CameraDelayOperation extends
 			AsyncTask<Integer, Integer, String> {
+
+		private Time startupTime;
+		private Time currentTime;
+		private int delayTime;
+
+		public CameraDelayOperation() {
+			startupTime = new Time();
+			currentTime = new Time();
+
+			startupTime.setToNow();
+		}
 
 		@Override
 		protected String doInBackground(Integer... params) {
-			int time = params[0].intValue();
+			int time_interval;
 
-			while (--time != 0) {
-				publishProgress(time);
+			delayTime = params[0].intValue();
+
+			do {
+				currentTime.setToNow();
+				time_interval = delayTime
+						- (int) ((currentTime.toMillis(true) - startupTime
+								.toMillis(true)) / 1000);
+
+				publishProgress(time_interval);
 				try {
 					Thread.sleep(1000);
 				} catch (InterruptedException e) {
@@ -213,31 +274,51 @@ public class Video_Capture_Main extends ActionBarActivity {
 				if (isRecording == PROCESS_FREE) {
 					break;
 				}
-			}
+			} while (time_interval > 0);
 			return "Executed";
 		}
 
 		@Override
 		protected void onPostExecute(String result) {
+			boolean status = false;
+
+			captureCameraLock.lock();
 			captureDelayTimeTW.setVisibility(TextView.INVISIBLE);
 			if (isRecording != PROCESS_FREE) {
-				startVideoRecording();
+				status = startVideoRecording();
 			}
+
+			if (status == false) {
+				isRecording = PROCESS_FREE;
+			}
+
+			setButtonStatus(isRecording);
+
+			captureCameraLock.unlock();
 		}
 
 		@Override
 		protected void onPreExecute() {
+			captureCameraLock.lock();
+
 			captureDelayTimeTW.setText(null);
 			captureDelayTimeTW.setVisibility(TextView.VISIBLE);
 			captureDelayTimeTW.setTextColor(Color.rgb(255, 0, 0));
+
+			captureCameraLock.unlock();
 		}
 
 		@Override
 		protected void onProgressUpdate(Integer... values) {
 			String str = new String();
+			Time tmp = new Time();
+			tmp.hour = values[0].intValue() / 3600;
+			tmp.minute = (values[0].intValue() - tmp.hour * 3600) / 60;
+			tmp.second = values[0].intValue() - tmp.hour * 3600 - tmp.minute
+					* 60;
 
-			str = String.format("Capture after %4d seconds",
-					values[0].intValue());
+			str = String.format("Capture after:%4d:%2d:%2d", tmp.hour,
+					tmp.minute, tmp.second);
 			captureDelayTimeTW.setText(str);
 		}
 	}
@@ -284,24 +365,15 @@ public class Video_Capture_Main extends ActionBarActivity {
 		@Override
 		protected void onPostExecute(String result) {
 			captureTimeTW.setVisibility(TextView.INVISIBLE);
+			captureCameraLock.lock();
 			if (isRecording != PROCESS_FREE) {
 				isRecording = PROCESS_FREE;
 
 				cameraOperation.stopVideoCapture();
 
-				// inform the user that recording has stopped
-				// setCaptureButtonText("Capture");
-				captureVideoButton.setText("Capture Video");
-
-				/* Enable other button */
-				captureVideoButtonI.setEnabled(true);
-				captureButtonI.setEnabled(true);
-				captureButton.setEnabled(true);
-
-				if (cameraSetting.GetScreenLock() == false) {
-					ReleaseScreenOnLock();
-				}
+				setButtonStatus(isRecording);
 			}
+			captureCameraLock.unlock();
 		}
 
 		@Override
@@ -326,27 +398,19 @@ public class Video_Capture_Main extends ActionBarActivity {
 		}
 	}
 
-	public void startVideoRecording() {
-		if (isRecording == PROCESS_DELAY) {
-			isRecording = PROCESS_CAPTURE;
-		}
+	public boolean startVideoRecording() {
+		boolean status = false;
+
 		cameraOperation.releaseCamera();
 		// initialize video camera
-		if (cameraOperation.prepareVideoRecorder()) {
-			/* Disable other button */
-			captureVideoButtonI.setEnabled(false);
-			captureButtonI.setEnabled(false);
-			captureButton.setEnabled(false);
-			GetScreenOnLock();
 
+		status = cameraOperation.prepareVideoRecorder();
+
+		if (status == true) {
 			// Camera is available and unlocked, MediaRecorder
 			// is prepared,
 			// now you can start recording
 			cameraOperation.mMediaRecorder.start();
-
-			// inform the user that recording has started
-			// setCaptureButtonText("Stop");
-			captureVideoButton.setText("Capture Stop");
 
 			new CameraCaptureOperation(cameraSetting.GetStartCaptureTime())
 					.execute(0);
@@ -357,9 +421,9 @@ public class Video_Capture_Main extends ActionBarActivity {
 			cameraOperation.releaseMediaRecorder();
 			// inform user
 			cameraOperation.reGetCameraWithRetry();
-
-			isRecording = PROCESS_FREE;
 		}
+
+		return status;
 	}
 
 	/** Called when the user touches the button */

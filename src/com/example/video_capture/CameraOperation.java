@@ -34,7 +34,7 @@ public class CameraOperation {
 
 	private Camera mCamera;
 	public MediaRecorder mMediaRecorder;
-	
+
 	private static int numOfCamera = 0;
 
 	private CameraPreview mPreview;
@@ -235,11 +235,20 @@ public class CameraOperation {
 	private static File getOutputMediaFile(int type) {
 		// To be safe, you should check that the SDCard is mounted
 		// using Environment.getExternalStorageState() before doing this.
+		File mediaStorageDir;
 
-		File mediaStorageDir = new File(
-				Environment
-						.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
-				"MyCameraApp");
+		/* Get my default storage and then change to the normal one */
+		mediaStorageDir = new File("//storage//sdcard1//DCIM", "MyCameraApp");
+
+		if (!mediaStorageDir.exists()) {
+			if (!mediaStorageDir.mkdirs()) {
+				mediaStorageDir = new File(
+						Environment
+								.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+						"MyCameraApp");
+			}
+		}
+
 		// This location works best if you want the created images to be shared
 		// between applications and persist after your app has been uninstalled.
 
@@ -347,18 +356,18 @@ public class CameraOperation {
 		String str = Title;
 		int size;
 		int count = 0;
-		
-		if(dat != null){
+
+		if (dat != null) {
 			size = dat.size();
 			for (count = 0; count < size; count++) {
 				str += ":";
 				str += dat.get(count);
 			}
 		}
-		if(count == 0){
+		if (count == 0) {
 			str += ":Unspport Feature";
 		}
-		
+
 		str += "\n";
 
 		return str.getBytes();
@@ -404,10 +413,10 @@ public class CameraOperation {
 					+ "info.txt");
 
 			if (infoFile.exists()) {
-				//infoFile.delete();
+				// infoFile.delete();
 				return;
 			}
-			
+
 			/* dump all the information to a file */
 			try {
 				fOut = new FileOutputStream(infoFile);
@@ -435,31 +444,32 @@ public class CameraOperation {
 					.getSupportedAntibanding();
 			string_info = convertList2String(antiBanding, "antiBanding");
 			fOut.write(string_info);
-			
+
 			List<String> colorEffects = cameraParameters
 					.getSupportedColorEffects();
 			string_info = convertList2String(colorEffects, "colorEffects");
 			fOut.write(string_info);
-			
+
 			List<String> flashModes = cameraParameters.getSupportedFlashModes();
 			string_info = convertList2String(flashModes, "flashModes");
 			fOut.write(string_info);
-			
+
 			List<Size> jpegThumbnailSizes = cameraParameters
 					.getSupportedJpegThumbnailSizes();
-			string_info = convertList2String(jpegThumbnailSizes, "jpegThumbnailSizes");
+			string_info = convertList2String(jpegThumbnailSizes,
+					"jpegThumbnailSizes");
 			fOut.write(string_info);
-			
+
 			List<Integer> pictureFormats = cameraParameters
 					.getSupportedPictureFormats();
 			string_info = convertList2String(pictureFormats, "pictureFormats");
 			fOut.write(string_info);
-			
+
 			List<Integer> previewFormats = cameraParameters
 					.getSupportedPreviewFormats();
 			string_info = convertList2String(previewFormats, "previewFormats");
 			fOut.write(string_info);
-			
+
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
 				previewFpsRange = cameraParameters
 						.getSupportedPreviewFpsRange();
@@ -468,21 +478,22 @@ public class CameraOperation {
 			}
 			string_info = convertList2String(previewFpsRange, "previewFpsRange");
 			fOut.write(string_info);
-			
+
 			List<Integer> previewFrameRates = cameraParameters
 					.getSupportedPreviewFrameRates();
-			string_info = convertList2String(previewFrameRates, "previewFrameRates");
+			string_info = convertList2String(previewFrameRates,
+					"previewFrameRates");
 			fOut.write(string_info);
-			
+
 			List<Size> previewSizes = cameraParameters
 					.getSupportedPreviewSizes();
 			string_info = convertList2String(previewSizes, "previewSizes");
 			fOut.write(string_info);
-			
+
 			List<String> sceneModes = cameraParameters.getSupportedSceneModes();
 			string_info = convertList2String(sceneModes, "sceneModes");
 			fOut.write(string_info);
-			
+
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
 				videoSizes = cameraParameters.getSupportedVideoSizes();
 			} else {
@@ -490,7 +501,7 @@ public class CameraOperation {
 			}
 			string_info = convertList2String(videoSizes, "videoSizes");
 			fOut.write(string_info);
-			
+
 			List<String> witeBalance = cameraParameters
 					.getSupportedWhiteBalance();
 			string_info = convertList2String(witeBalance, "witeBalance");

@@ -13,7 +13,7 @@ public class CameraSetting {
 	private static final String PREF_DELAY_CAPTURE_TIME = "delay_capture_time";
 	private static final String PREF_START_CAPTURE_TIME = "start_capture_time";
 	private static final String PREF_VIDEO_QUALITY = "capture_video_quality";
-	private static final Boolean DEBUG_MODE = true;
+	private static final Boolean DEBUG_MODE = false;
 
 	Context context;
 	SharedPreferences preference;
@@ -22,8 +22,10 @@ public class CameraSetting {
 		this.context = con;
 		preference = PreferenceManager.getDefaultSharedPreferences(context);
 		
-		if(preference.edit().clear().commit() == false){
-			Log.d(TAG, "Fail to clear the preference");
+		if(DEBUG_MODE == true){
+			if(preference.edit().clear().commit() == false){
+				Log.d(TAG, "Fail to clear the preference");
+			}
 		}
 		
 		PreferenceManager.setDefaultValues(context, R.xml.pref_general,

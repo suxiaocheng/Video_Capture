@@ -26,7 +26,7 @@ import android.util.Log;
  */
 public class SettingsActivity extends PreferenceActivity {
 
-	private static final String TAG = "PreferenceActivity"; 
+	private static final String TAG = "PreferenceActivity";
 	/**
 	 * Determines whether to always show the simplified settings UI, where
 	 * settings are presented in a single list. When false, settings are shown
@@ -62,6 +62,18 @@ public class SettingsActivity extends PreferenceActivity {
 		// their values. When their values change, their summaries are updated
 		// to reflect the new value, per the Android Design guidelines.
 		bindPreferenceSummaryToValue(findPreference("capture_video_quality"));
+	}
+
+	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB){
+			getActionBar().setDisplayHomeAsUpEnabled(true);
+		}
+		// If your minSdkVersion is 11 or higher, instead use:
+		// getActionBar().setDisplayHomeAsUpEnabled(true);
 	}
 
 	/** {@inheritDoc} */
@@ -128,12 +140,12 @@ public class SettingsActivity extends PreferenceActivity {
 	 * @see #sBindPreferenceSummaryToValueListener
 	 */
 	private static void bindPreferenceSummaryToValue(Preference preference) {
-		
-		if(preference == null){
+
+		if (preference == null) {
 			Log.d(TAG, "Preference null pointer");
 			return;
 		}
-		
+
 		// Set the listener to watch for value changes.
 		preference
 				.setOnPreferenceChangeListener(sBindPreferenceSummaryToValueListener);
