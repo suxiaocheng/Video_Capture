@@ -30,7 +30,7 @@
     
     <!-- NOTE: ListPreference's summary should be set to its value by the activity code. -->
     <ListPreference
-        android:defaultValue="1"
+        android:defaultValue="0"
         android:entries="@array/pref_capture_video_quility_titles"
         android:entryValues="@array/pref_capture_video_quility_values"
         android:key="capture_video_quality"

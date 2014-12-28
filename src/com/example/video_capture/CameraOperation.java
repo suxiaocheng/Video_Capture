@@ -6,7 +6,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 
 import android.annotation.TargetApi;
@@ -42,14 +41,26 @@ public class CameraOperation {
 	/* reverse for future, and this value can be change */
 	private int picturePreviewTime = 0x02;
 
+	/* changeable feature list */
+	private List<Integer> zoomRatios;
+	private int zoomValue;
+
 	public CameraOperation(CameraPreview cp) {
 		mPreview = cp;
 	}
+	
+	public void focusCameraAgain(){
+		mCamera.autoFocus(null);
+	}
 
-	public boolean prepareVideoRecorder() {
+	public boolean prepareVideoRecorder(int quality) {
 		String filename;
 
 		mCamera = getCameraInstance();
+		
+		/* set the camera feature */
+		setVideoFeature(mCamera);
+		
 		mMediaRecorder = new MediaRecorder();
 
 		// Step 1: Unlock and set camera to MediaRecorder
@@ -61,8 +72,40 @@ public class CameraOperation {
 		mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
 
 		// Step 3: Set a CamcorderProfile (requires API Level 8 or higher)
-		mMediaRecorder.setProfile(CamcorderProfile
-				.get(CamcorderProfile.QUALITY_LOW));
+		/**
+		 * Quality level corresponding to the lowest available resolution.
+		 */
+		// QUALITY_LOW = 0;
+		/**
+		 * Quality level corresponding to the highest available resolution.
+		 */
+		// QUALITY_HIGH = 1;
+		/**
+		 * Quality level corresponding to the qcif (176 x 144) resolution.
+		 */
+		// QUALITY_QCIF = 2;
+		/**
+		 * Quality level corresponding to the cif (352 x 288) resolution.
+		 */
+		// QUALITY_CIF = 3;
+		/**
+		 * Quality level corresponding to the 480p (720 x 480) resolution. Note
+		 * that the horizontal resolution for 480p can also be other values,
+		 * such as 640 or 704, instead of 720.
+		 */
+		// QUALITY_480P = 4;
+		/**
+		 * Quality level corresponding to the 720p (1280 x 720) resolution.
+		 */
+		// QUALITY_720P = 5;
+		/**
+		 * Quality level corresponding to the 1080p (1920 x 1080) resolution.
+		 * Note that the vertical resolution for 1080p can also be 1088, instead
+		 * of 1080 (used by some vendors to avoid cropping during video
+		 * playback).
+		 */
+		// QUALITY_1080P = 6;
+		mMediaRecorder.setProfile(CamcorderProfile.get(quality));
 
 		// mMediaRecorder.setProfile(CamcorderProfile
 		// .get(CamcorderProfile.QUALITY_HIGH));
@@ -352,6 +395,70 @@ public class CameraOperation {
 		return false;
 	}
 
+	public void setVideoFeature(Camera c) {
+		Parameters cameraParameters;
+		// get further information about its capabilities
+		cameraParameters = c.getParameters();
+
+		String focusModes = cameraParameters.getFocusMode();
+		if (focusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO)){
+			// Autofocus mode is supported
+			cameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
+		} 
+		else{
+			// Autofocus mode is supported
+			cameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+		}
+		
+		cameraParameters.setZoom(zoomValue);
+		mCamera.setParameters(cameraParameters);
+	}
+
+	public boolean zoomCameraOut() {
+		boolean status = false;
+		int currentZoom;
+
+		Parameters cameraParameters;
+		cameraParameters = mCamera.getParameters();
+
+		status = cameraParameters.isZoomSupported();
+		if (status == true) {
+			currentZoom = cameraParameters.getZoom();
+			if (currentZoom < cameraParameters.getMaxZoom()) {
+				currentZoom++;
+				cameraParameters.setZoom(currentZoom);
+				mCamera.setParameters(cameraParameters);
+				
+				zoomValue = currentZoom;
+				status = true;
+			}
+		}
+
+		return status;
+	}
+	
+	public boolean zoomCameraIn() {
+		boolean status = false;
+		int currentZoom;
+
+		Parameters cameraParameters;
+		cameraParameters = mCamera.getParameters();
+
+		status = cameraParameters.isZoomSupported();
+		if (status == true) {
+			currentZoom = cameraParameters.getZoom();
+			if (currentZoom > 0) {
+				currentZoom--;
+				cameraParameters.setZoom(currentZoom);
+				mCamera.setParameters(cameraParameters);
+				
+				zoomValue = currentZoom;
+				status = true;
+			}
+		}
+		return status;
+	}
+
 	public <T> byte[] convertList2String(List<T> dat, String Title) {
 		String str = Title;
 		int size;
@@ -413,8 +520,8 @@ public class CameraOperation {
 					+ "info.txt");
 
 			if (infoFile.exists()) {
-				// infoFile.delete();
-				return;
+				infoFile.delete();
+				// return;
 			}
 
 			/* dump all the information to a file */
@@ -433,13 +540,9 @@ public class CameraOperation {
 			List<Size> videoSizes;
 
 			List<String> focusModes = cameraParameters.getSupportedFocusModes();
-
 			string_info = convertList2String(focusModes, "focusModes");
 			fOut.write(string_info);
 
-			if (focusModes.contains(Camera.Parameters.FOCUS_MODE_AUTO)) {
-				// Autofocus mode is supported
-			}
 			List<String> antiBanding = cameraParameters
 					.getSupportedAntibanding();
 			string_info = convertList2String(antiBanding, "antiBanding");
@@ -505,6 +608,14 @@ public class CameraOperation {
 			List<String> witeBalance = cameraParameters
 					.getSupportedWhiteBalance();
 			string_info = convertList2String(witeBalance, "witeBalance");
+			fOut.write(string_info);
+
+			if (cameraParameters.isZoomSupported()) {
+				zoomRatios = cameraParameters.getZoomRatios();
+			} else {
+				zoomRatios = null;
+			}
+			string_info = convertList2String(zoomRatios, "zoomRatios");
 			fOut.write(string_info);
 
 			try {

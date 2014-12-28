@@ -45,6 +45,10 @@ public class Video_Capture_Main extends ActionBarActivity {
 	private Button captureVideoButton;
 	private Button captureButtonI;
 	private Button captureVideoButtonI;
+	
+	/* control button zoom out and zoom in */
+	private Button zoomOutButton;
+	private Button zoomInButton;
 
 	/* control display delay capture time */
 	private TextView captureDelayTimeTW;
@@ -64,6 +68,8 @@ public class Video_Capture_Main extends ActionBarActivity {
 
 	private Uri fileUri;
 
+	public Video_Capture_Main capture_main;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -74,10 +80,12 @@ public class Video_Capture_Main extends ActionBarActivity {
 		// WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
 		setContentView(R.layout.activity_video__capture__main);
+
+		capture_main = this;
+
 		if (savedInstanceState == null) {
 			getSupportFragmentManager().beginTransaction()
-					.add(R.id.container, new PlaceholderFragment(this))
-					.commit();
+					.add(R.id.container, new PlaceholderFragment()).commit();
 		}
 		if (CameraOperation.checkCameraHardware(this) == false) {
 			Toast.makeText(this,
@@ -118,14 +126,12 @@ public class Video_Capture_Main extends ActionBarActivity {
 	 */
 	public class PlaceholderFragment extends Fragment {
 
-		Video_Capture_Main capture_main;
-
 		public PlaceholderFragment() {
-			Log.d(TAG, "capture_main:" + capture_main == null ? "NULL" : "OK");
 		}
 
-		public PlaceholderFragment(Video_Capture_Main main) {
-			capture_main = main;
+		@Override
+		public void onCreate(Bundle savedInstanceState) {
+			super.onCreate(savedInstanceState);
 		}
 
 		@Override
@@ -158,6 +164,9 @@ public class Video_Capture_Main extends ActionBarActivity {
 					cameraOperation.takePicture();
 				}
 			});
+			
+			zoomOutButton = (Button) rootView.findViewById(R.id.zoomOut);
+			zoomInButton = (Button) rootView.findViewById(R.id.zoomIn);
 
 			// Add a listener to the Capture button
 			captureVideoButton = (Button) rootView
@@ -404,7 +413,8 @@ public class Video_Capture_Main extends ActionBarActivity {
 		cameraOperation.releaseCamera();
 		// initialize video camera
 
-		status = cameraOperation.prepareVideoRecorder();
+		status = cameraOperation.prepareVideoRecorder(cameraSetting
+				.GetCaptureVideoQuality());
 
 		if (status == true) {
 			// Camera is available and unlocked, MediaRecorder
@@ -472,6 +482,42 @@ public class Video_Capture_Main extends ActionBarActivity {
 		// start the Video Capture Intent
 		startActivityForResult(intent, CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE);
 
+	}
+
+	public void ZoomVideoOut(View view) {
+		boolean status;
+		
+		captureCameraLock.lock();
+
+		if (isRecording == PROCESS_FREE) {
+			status = cameraOperation.zoomCameraOut();
+			if(status == false){
+				zoomOutButton.setEnabled(false);
+			}
+			zoomInButton.setEnabled(true);
+		}
+
+		captureCameraLock.unlock();
+	}
+	
+	public void previewClickFunction(View view) {
+		cameraOperation.focusCameraAgain();
+	}
+
+	public void ZoomVideoIn(View view) {
+		boolean status;
+		captureCameraLock.lock();
+
+		if (isRecording == PROCESS_FREE) {
+			status = cameraOperation.zoomCameraIn();
+			
+			if(status == false){
+				zoomInButton.setEnabled(false);
+			}
+			zoomOutButton.setEnabled(true);
+		}
+
+		captureCameraLock.unlock();
 	}
 
 	@Override

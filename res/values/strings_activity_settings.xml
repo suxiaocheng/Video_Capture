@@ -23,14 +23,22 @@
     <!-- Capture Video Quility settings -->
     <string name="pref_capture_video_quility_header">Video Quality</string>
     <string-array name="pref_capture_video_quility_titles">
-        <item>High Quility</item>
-        <item>Normal Quility</item>
         <item>Low Quility</item>
+        <item>High Quility</item>
+        <item>QCIF(176X144)</item>
+        <item>CIF(352X288)</item>
+        <item>480P(720X480)</item>
+        <item>720P(1080X720)</item>
+        <item>1080P(1920X1080)</item>
     </string-array>
     <string-array name="pref_capture_video_quility_values">
-        <item>2</item>
-        <item>1</item>
         <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
     </string-array>
 
 </resources>

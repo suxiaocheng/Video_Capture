@@ -18,7 +18,8 @@
         <FrameLayout
             android:id="@+id/camera_preview"
             android:layout_width="fill_parent"
-            android:layout_height="fill_parent" >
+            android:layout_height="fill_parent"
+            android:onClick="previewClickFunction" >
         </FrameLayout>
 
         <TextView
@@ -29,7 +30,7 @@
             android:layout_alignParentRight="true"
             android:text="TextView"
             android:visibility="invisible" />
-        
+
         <TextView
             android:id="@+id/capture_info"
             android:layout_width="wrap_content"
@@ -38,6 +39,27 @@
             android:layout_alignParentRight="true"
             android:text="TextView"
             android:visibility="invisible" />
+
+        <Button
+            android:id="@+id/zoomOut"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentStart="false"
+            android:text="+" 
+            android:onClick="ZoomVideoOut"/>
+
+        <Button
+            android:id="@+id/zoomIn"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentStart="false"
+            android:layout_below="@id/zoomOut"
+            android:text="-" 
+            android:onClick="ZoomVideoIn"/>
 
     </RelativeLayout>
 

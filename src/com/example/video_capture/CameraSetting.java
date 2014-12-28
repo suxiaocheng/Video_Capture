@@ -33,9 +33,13 @@ public class CameraSetting {
 	}
 
 	public int GetCaptureVideoQuality() {
-		int tmp = preference.getInt(PREF_VIDEO_QUALITY, 1);
+		if (preference == null) {
+			Log.d(TAG, "preference null");
+			return 0;
+		}
+		String tmp = preference.getString(PREF_VIDEO_QUALITY, "0");
 
-		return tmp;
+		return Integer.parseInt(tmp);
 	}
 
 	public int GetDelayCaptureTime() {
