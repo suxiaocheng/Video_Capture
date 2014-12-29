@@ -13,6 +13,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.hardware.Camera;
+import android.hardware.Camera.AutoFocusCallback;
 import android.hardware.Camera.Parameters;
 import android.hardware.Camera.PictureCallback;
 import android.hardware.Camera.Size;
@@ -23,6 +24,7 @@ import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
 import android.view.Surface;
+import android.view.View;
 
 public class CameraOperation {
 
@@ -48,19 +50,29 @@ public class CameraOperation {
 	public CameraOperation(CameraPreview cp) {
 		mPreview = cp;
 	}
-	
-	public void focusCameraAgain(){
+
+	public void focusCameraAgain() {
 		mCamera.autoFocus(null);
+	}
+	
+	public void focusTakePicture(){
+		mCamera.autoFocus(new AutoFocusCallback() {
+	        public void onAutoFocus(boolean success, Camera camera) {
+	            if(success){
+	            	takePicture();
+	            }
+	        }
+	    });
 	}
 
 	public boolean prepareVideoRecorder(int quality) {
 		String filename;
 
 		mCamera = getCameraInstance();
-		
+
 		/* set the camera feature */
 		setVideoFeature(mCamera);
-		
+
 		mMediaRecorder = new MediaRecorder();
 
 		// Step 1: Unlock and set camera to MediaRecorder
@@ -219,6 +231,7 @@ public class CameraOperation {
 		if (mCamera != null) {
 			try {
 				getCameraFeatrues(mCamera);
+				setPictureFeature(mCamera);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -395,21 +408,54 @@ public class CameraOperation {
 		return false;
 	}
 
+	@TargetApi(Build.VERSION_CODES.GINGERBREAD)
 	public void setVideoFeature(Camera c) {
 		Parameters cameraParameters;
 		// get further information about its capabilities
 		cameraParameters = c.getParameters();
 
 		String focusModes = cameraParameters.getFocusMode();
-		if (focusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO)){
-			// Autofocus mode is supported
-			cameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
-		} 
-		else{
-			// Autofocus mode is supported
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+			if (focusModes
+					.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO)) {
+				// Autofocus mode is supported
+				cameraParameters
+						.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
+			} else {
+				// Autofocus mode is supported
+				cameraParameters
+						.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+			}
+		} else {
 			cameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
 		}
-		
+
+		cameraParameters.setZoom(zoomValue);
+		mCamera.setParameters(cameraParameters);
+	}
+
+	@TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+	public void setPictureFeature(Camera c) {
+		Parameters cameraParameters;
+		// get further information about its capabilities
+		cameraParameters = c.getParameters();
+
+		String focusModes = cameraParameters.getFocusMode();
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+			if (focusModes
+					.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
+				// Autofocus mode is supported
+				cameraParameters
+						.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+			} else {
+				// Autofocus mode is supported
+				cameraParameters
+						.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+			}
+		} else {
+			cameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+		}
+
 		cameraParameters.setZoom(zoomValue);
 		mCamera.setParameters(cameraParameters);
 	}
@@ -428,7 +474,7 @@ public class CameraOperation {
 				currentZoom++;
 				cameraParameters.setZoom(currentZoom);
 				mCamera.setParameters(cameraParameters);
-				
+
 				zoomValue = currentZoom;
 				status = true;
 			}
@@ -436,7 +482,7 @@ public class CameraOperation {
 
 		return status;
 	}
-	
+
 	public boolean zoomCameraIn() {
 		boolean status = false;
 		int currentZoom;
@@ -451,7 +497,7 @@ public class CameraOperation {
 				currentZoom--;
 				cameraParameters.setZoom(currentZoom);
 				mCamera.setParameters(cameraParameters);
-				
+
 				zoomValue = currentZoom;
 				status = true;
 			}

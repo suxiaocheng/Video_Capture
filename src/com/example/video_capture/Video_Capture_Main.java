@@ -45,7 +45,7 @@ public class Video_Capture_Main extends ActionBarActivity {
 	private Button captureVideoButton;
 	private Button captureButtonI;
 	private Button captureVideoButtonI;
-	
+
 	/* control button zoom out and zoom in */
 	private Button zoomOutButton;
 	private Button zoomInButton;
@@ -161,10 +161,10 @@ public class Video_Capture_Main extends ActionBarActivity {
 			captureButton.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					cameraOperation.takePicture();
+					cameraOperation.focusTakePicture();
 				}
 			});
-			
+
 			zoomOutButton = (Button) rootView.findViewById(R.id.zoomOut);
 			zoomInButton = (Button) rootView.findViewById(R.id.zoomIn);
 
@@ -350,6 +350,8 @@ public class Video_Capture_Main extends ActionBarActivity {
 		@Override
 		protected String doInBackground(Integer... params) {
 			int time_interval;
+			/* temporary add the auto focus function here */
+			int auto_focus_count = 2;
 
 			do {
 				currentTime.setToNow();
@@ -365,6 +367,10 @@ public class Video_Capture_Main extends ActionBarActivity {
 				}
 				if (isRecording == PROCESS_FREE) {
 					break;
+				}
+				if(--auto_focus_count == 0){
+					auto_focus_count = 10;
+					cameraOperation.focusCameraAgain();
 				}
 			} while ((captureTime == 0) || (captureTime > time_interval));
 
@@ -486,20 +492,20 @@ public class Video_Capture_Main extends ActionBarActivity {
 
 	public void ZoomVideoOut(View view) {
 		boolean status;
-		
+
 		captureCameraLock.lock();
 
-		if (isRecording == PROCESS_FREE) {
-			status = cameraOperation.zoomCameraOut();
-			if(status == false){
-				zoomOutButton.setEnabled(false);
-			}
-			zoomInButton.setEnabled(true);
+		// if (isRecording == PROCESS_FREE) {
+		status = cameraOperation.zoomCameraOut();
+		if (status == false) {
+			zoomOutButton.setEnabled(false);
 		}
+		zoomInButton.setEnabled(true);
+		// }
 
 		captureCameraLock.unlock();
 	}
-	
+
 	public void previewClickFunction(View view) {
 		cameraOperation.focusCameraAgain();
 	}
@@ -508,14 +514,14 @@ public class Video_Capture_Main extends ActionBarActivity {
 		boolean status;
 		captureCameraLock.lock();
 
-		if (isRecording == PROCESS_FREE) {
-			status = cameraOperation.zoomCameraIn();
-			
-			if(status == false){
-				zoomInButton.setEnabled(false);
-			}
-			zoomOutButton.setEnabled(true);
+		// if (isRecording == PROCESS_FREE) {
+		status = cameraOperation.zoomCameraIn();
+
+		if (status == false) {
+			zoomInButton.setEnabled(false);
 		}
+		zoomOutButton.setEnabled(true);
+		// }
 
 		captureCameraLock.unlock();
 	}
