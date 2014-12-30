@@ -33,7 +33,7 @@ public class CameraOperation {
 	public static final int MEDIA_TYPE_IMAGE = 1;
 	public static final int MEDIA_TYPE_VIDEO = 2;
 
-	private Camera mCamera;
+	private static Camera mCamera = null;
 	public MediaRecorder mMediaRecorder;
 
 	private static int numOfCamera = 0;
@@ -273,7 +273,7 @@ public class CameraOperation {
 		return c; // returns null if camera is unavailable
 	}
 
-	public void releaseCamera() {
+	public static void releaseCamera() {
 		if (mCamera != null) {
 			CameraPreview.UpdateCamera(null);
 			mCamera.stopPreview();
