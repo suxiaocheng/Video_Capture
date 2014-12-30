@@ -20,11 +20,11 @@ import android.hardware.Camera.Size;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
 import android.view.Surface;
-import android.view.View;
 
 public class CameraOperation {
 
@@ -54,15 +54,15 @@ public class CameraOperation {
 	public void focusCameraAgain() {
 		mCamera.autoFocus(null);
 	}
-	
-	public void focusTakePicture(){
+
+	public void focusTakePicture() {
 		mCamera.autoFocus(new AutoFocusCallback() {
-	        public void onAutoFocus(boolean success, Camera camera) {
-	            if(success){
-	            	takePicture();
-	            }
-	        }
-	    });
+			public void onAutoFocus(boolean success, Camera camera) {
+				if (success) {
+					takePicture();
+				}
+			}
+		});
 	}
 
 	public boolean prepareVideoRecorder(int quality) {
@@ -194,28 +194,42 @@ public class CameraOperation {
 		}
 	}
 
-	/* reget the camera handle with retry. Timeout is 2 sec; */
+	/* reget the camera handle with async task */
 	public boolean reGetCameraWithRetry() {
-		int retryCount = 0;
-		// reget the camera immediately on pause event
-		if (mCamera == null) {
-			// Create an instance of Camera
-			/* Try get the Camera dump in the UI thread */
-			while (mCamera == null) {
+		new GetCameraAsyncTask().execute(50);
+		return true;
+	}
+
+	private class GetCameraAsyncTask extends
+			AsyncTask<Integer, Integer, String> {
+
+		public GetCameraAsyncTask() {
+
+		}
+
+		@Override
+		protected String doInBackground(Integer... params) {
+			int retryTimes = params[0].intValue();
+
+			while (retryTimes-- > 0) {
 				mCamera = getCameraInstance();
 				CameraPreview.UpdateCamera(mCamera);
+				if (mCamera != null) {
+					break;
+				}
 				try {
-					// wait(100);
 					Thread.sleep(100);
 				} catch (InterruptedException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-				if (++retryCount > 20) {
-					Log.d(TAG, "Open Camera fail");
-					break;
-				}
 			}
+
+			return "True";
+		}
+
+		@Override
+		protected void onPostExecute(String result) {
 			if (mCamera != null) {
 				try {
 					mCamera.setPreviewDisplay(mPreview.getHolder());
@@ -225,19 +239,26 @@ public class CameraOperation {
 				}
 				mCamera.setDisplayOrientation(0);
 				mCamera.startPreview();
-				Log.d(TAG, "onResume sucessfully");
+
+				try {
+					getCameraFeatrues(mCamera);
+					setPictureFeature(mCamera);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}else{
+				
 			}
 		}
-		if (mCamera != null) {
-			try {
-				getCameraFeatrues(mCamera);
-				setPictureFeature(mCamera);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+
+		@Override
+		protected void onPreExecute() {
 		}
-		return (mCamera == null) ? false : true;
+
+		@Override
+		protected void onProgressUpdate(Integer... values) {
+		}
 	}
 
 	/**
