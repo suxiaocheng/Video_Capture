@@ -195,43 +195,41 @@ public class CameraOperation {
 	}
 
 	/**
-	 * try to get the camera instance
-	 * 
-	 * @return false: if fail
-	 *         <p>
-	 *         true: if sucess
-	 */
-	public boolean tryGetCamera() {
-		boolean status;
-		mCamera = getCameraInstance();
-		CameraPreview.UpdateCamera(mCamera);
-
-		status = (mCamera == null) ? false : true;
-
-		Log.d(TAG, "try get camera, status:" + (status ? "True" : "False"));
-
-		return status;
-	}
-
-	/**
-	 * Post operation of init the display preview reset the camera feature to
-	 * other state
-	 * 
-	 * @return return true if mCamera is not null, false otherwise
-	 */
-	public boolean tryGetCameraPostOperation() {
-		boolean status = true;
-
-		if (mCamera != null) {
-			try {
-				mCamera.setPreviewDisplay(mPreview.getHolder());
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+	/* reget the camera handle with retry. Timeout is 2 sec; */
+	public boolean reGetCameraWithRetry() {
+		int retryCount = 0;
+		// reget the camera immediately on pause event
+		if (mCamera == null) {
+			// Create an instance of Camera
+			/* Try get the Camera dump in the UI thread */
+			while (mCamera == null) {
+				mCamera = getCameraInstance();
+				CameraPreview.UpdateCamera(mCamera);
+				try {
+					// wait(100);
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				if (++retryCount > 50) {
+					Log.d(TAG, "Open Camera fail");
+					break;
+				}
 			}
-			//mCamera.setDisplayOrientation(0);
-			mCamera.startPreview();
-
+			if (mCamera != null) {
+				try {
+					mCamera.setPreviewDisplay(mPreview.getHolder());
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				mCamera.setDisplayOrientation(0);
+				mCamera.startPreview();
+				Log.d(TAG, "onResume sucessfully");
+			}
+		}
+		if (mCamera != null) {
 			try {
 				getCameraFeatrues(mCamera);
 				setPictureFeature(mCamera);
@@ -239,11 +237,8 @@ public class CameraOperation {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		} else {
-			status = false;
 		}
-
-		return status;
+		return (mCamera == null) ? false : true;
 	}
 
 	/**

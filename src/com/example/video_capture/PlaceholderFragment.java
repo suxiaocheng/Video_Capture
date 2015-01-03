@@ -72,8 +72,6 @@ public class PlaceholderFragment extends Fragment {
 
 	private CameraOperation cameraOperation;
 
-	private GetCameraAsyncTask getCameraTask;
-
 	public PlaceholderFragment() {
 	}
 
@@ -254,6 +252,7 @@ public class PlaceholderFragment extends Fragment {
 			}
 		});
 		
+		isRecording = PROCESS_STARTED;
 		setButtonStatus(isRecording);
 
 		return rootView;
@@ -278,7 +277,9 @@ public class PlaceholderFragment extends Fragment {
 			captureButtonI.setEnabled(true);
 			captureButton.setEnabled(true);
 
+			captureVideoButton.setEnabled(true);
 			captureVideoButton.setText("Capture Video");
+			
 
 			/* Release the screen lock */
 			if (cameraSetting.GetScreenLock() == false) {
@@ -291,6 +292,7 @@ public class PlaceholderFragment extends Fragment {
 			captureButtonI.setEnabled(false);
 			captureButton.setEnabled(false);
 
+			captureVideoButton.setEnabled(true);
 			captureVideoButton.setText("Capture Stop");
 		} else if (status == PROCESS_DELAY) {
 			/* Enable other button */
@@ -298,6 +300,7 @@ public class PlaceholderFragment extends Fragment {
 			captureButtonI.setEnabled(false);
 			captureButton.setEnabled(false);
 
+			captureVideoButton.setEnabled(true);
 			captureVideoButton.setText("Capture Cancel");
 		} else if (status == PROCESS_STARTED) {
 			/* Just started, disable all button */
@@ -317,111 +320,15 @@ public class PlaceholderFragment extends Fragment {
 		isRecording = PROCESS_STARTED;
 		setButtonStatus(isRecording);
 		
-		getCameraTask = new GetCameraAsyncTask();
-		getCameraTask.execute();
-		
-		while(getCameraTask.getThreadStatus() == true){
-			Log.d(TAG, "reGetCameraWithRetry times:" + delay_time);
-			--delay_time;
-			if(delay_time == 0){
-				getCameraTask.cancel(true);
-				capture_main.finish();
-				break;
-			}
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+		if(cameraOperation.reGetCameraWithRetry() == false){
+			Log.d(TAG, "reGetCameraWithRetry fail, camera instance is null");
+			capture_main.finish();
 		}
+		
 		isRecording = PROCESS_FREE;
 		setButtonStatus(isRecording);
 		
 		return true;
-	}
-
-	private class GetCameraAsyncTask extends AsyncTask<Void, Void, String> {
-
-		private boolean threadStatus;
-		private ReentrantLock resourcesAssessLock;
-
-		public GetCameraAsyncTask() {
-			resourcesAssessLock = new ReentrantLock();
-
-			resourcesAssessLock.lock();
-			threadStatus = true;
-			resourcesAssessLock.unlock();
-		}
-
-		/**
-		 * return the status of thread, if false, the thread is exist normally
-		 * otherwise should wait until the status get false; maybe a deadloop.
-		 * 
-		 * @return
-		 */
-		public boolean getThreadStatus() {
-			boolean ret;
-
-			resourcesAssessLock.lock();
-			ret = threadStatus;
-			resourcesAssessLock.unlock();
-
-			return ret;
-		}
-
-		@Override
-		protected String doInBackground(Void... params) {
-			/* when the task if first create, wait first */
-			Log.d(TAG, "Doing background job");
-			while (true) {
-				Log.d(TAG, "try get camera handle");
-				if (cameraOperation.tryGetCamera() == true) {
-					publishProgress();
-					Log.d(TAG, "sucessfully get camera handle");
-					break;
-				}
-				Log.d(TAG, "Fail, wait for the next loop");
-				if (isCancelled()) {
-					break;
-				}
-				try {
-					Thread.sleep(100);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				if (isCancelled()) {
-					break;
-				}
-			}
-
-			resourcesAssessLock.lock();
-			threadStatus = false;
-			resourcesAssessLock.unlock();
-
-			return "True";
-		}
-
-		@Override
-		protected void onCancelled() {
-
-		}
-
-		@Override
-		protected void onPostExecute(String result) {
-		}
-
-		@Override
-		protected void onPreExecute() {
-		}
-
-		@Override
-		protected void onProgressUpdate(Void... values) {
-			if (!cameraOperation.tryGetCameraPostOperation()) {
-				// capture_main.finish();
-			}
-		}
 	}
 
 	private class CameraDelayOperation extends

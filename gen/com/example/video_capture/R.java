@@ -1525,6 +1525,7 @@ containing a value of this type.
     }
     public static final class xml {
         public static final int pref_general=0x7f050000;
+        public static final int preferences=0x7f050001;
     }
     public static final class styleable {
         /**  ============================================ 
