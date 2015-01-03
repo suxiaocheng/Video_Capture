@@ -19,6 +19,7 @@
             android:id="@+id/camera_preview"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent" >
+
         </FrameLayout>
 
         <TextView
@@ -38,10 +39,21 @@
             android:layout_alignParentRight="true"
             android:text="TextView"
             android:visibility="invisible" />
+        
+        <TextView
+            android:id="@+id/zoom_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_centerInParent="false"
+            android:layout_centerVertical="true"
+            android:text="1.0"
+            android:textSize="40sp"
+            android:visibility="invisible" />
 
         <Button
             android:id="@+id/zoomOut"
-            style="?android:attr/buttonStyleSmall"
+            style="android:buttonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
@@ -50,13 +62,22 @@
 
         <Button
             android:id="@+id/zoomIn"
-            style="?android:attr/buttonStyleSmall"
+            style="android:buttonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
             android:layout_alignParentStart="false"
             android:layout_below="@id/zoomOut"
             android:text="-" />
+
+        <ProgressBar
+            android:id="@+id/loadingProgress"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:layout_marginBottom="18dp"
+            android:layout_marginRight="24dp" />
 
     </RelativeLayout>
 

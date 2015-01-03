@@ -1096,14 +1096,14 @@ containing a value of this type.
         public static final int action_menu_divider=0x7f060016;
         public static final int action_menu_presenter=0x7f060017;
         public static final int action_mode_close_button=0x7f060024;
-        public static final int action_settings=0x7f060048;
+        public static final int action_settings=0x7f06004a;
         public static final int activity_chooser_view_content=0x7f060025;
         public static final int always=0x7f06000b;
         public static final int beginning=0x7f060011;
-        public static final int button1=0x7f060046;
-        public static final int button2=0x7f060047;
-        public static final int button_capture=0x7f060044;
-        public static final int button_capture_video=0x7f060045;
+        public static final int button1=0x7f060048;
+        public static final int button2=0x7f060049;
+        public static final int button_capture=0x7f060046;
+        public static final int button_capture_video=0x7f060047;
         public static final int camera_preview=0x7f06003e;
         public static final int capture_info=0x7f060040;
         public static final int capture_info_delaytime=0x7f06003f;
@@ -1123,9 +1123,10 @@ containing a value of this type.
         public static final int icon=0x7f06002a;
         public static final int ifRoom=0x7f06000a;
         public static final int image=0x7f060027;
-        public static final int layout_button=0x7f060043;
+        public static final int layout_button=0x7f060045;
         public static final int listMode=0x7f060001;
         public static final int list_item=0x7f060029;
+        public static final int loadingProgress=0x7f060044;
         public static final int middle=0x7f060012;
         public static final int never=0x7f060009;
         public static final int none=0x7f060010;
@@ -1156,8 +1157,9 @@ containing a value of this type.
         public static final int up=0x7f060021;
         public static final int useLogo=0x7f060003;
         public static final int withText=0x7f06000c;
-        public static final int zoomIn=0x7f060042;
-        public static final int zoomOut=0x7f060041;
+        public static final int zoomIn=0x7f060043;
+        public static final int zoomOut=0x7f060042;
+        public static final int zoom_info=0x7f060041;
     }
     public static final class integer {
         /**  The maximum number of action buttons that should be permitted within
@@ -1523,7 +1525,6 @@ containing a value of this type.
     }
     public static final class xml {
         public static final int pref_general=0x7f050000;
-        public static final int preferences=0x7f050001;
     }
     public static final class styleable {
         /**  ============================================ 

@@ -45,7 +45,7 @@ public class CameraOperation {
 
 	/* changeable feature list */
 	private List<Integer> zoomRatios;
-	private int zoomValue;
+	private int zoomIndex;
 
 	public CameraOperation(CameraPreview cp) {
 		mPreview = cp;
@@ -194,71 +194,56 @@ public class CameraOperation {
 		}
 	}
 
-	/* reget the camera handle with async task */
-	public boolean reGetCameraWithRetry() {
-		new GetCameraAsyncTask().execute(50);
-		return true;
+	/**
+	 * try to get the camera instance
+	 * 
+	 * @return false: if fail
+	 *         <p>
+	 *         true: if sucess
+	 */
+	public boolean tryGetCamera() {
+		boolean status;
+		mCamera = getCameraInstance();
+		CameraPreview.UpdateCamera(mCamera);
+
+		status = (mCamera == null) ? false : true;
+
+		Log.d(TAG, "try get camera, status:" + (status ? "True" : "False"));
+
+		return status;
 	}
 
-	private class GetCameraAsyncTask extends
-			AsyncTask<Integer, Integer, String> {
+	/**
+	 * Post operation of init the display preview reset the camera feature to
+	 * other state
+	 * 
+	 * @return return true if mCamera is not null, false otherwise
+	 */
+	public boolean tryGetCameraPostOperation() {
+		boolean status = true;
 
-		public GetCameraAsyncTask() {
-
-		}
-
-		@Override
-		protected String doInBackground(Integer... params) {
-			int retryTimes = params[0].intValue();
-
-			while (retryTimes-- > 0) {
-				mCamera = getCameraInstance();
-				CameraPreview.UpdateCamera(mCamera);
-				if (mCamera != null) {
-					break;
-				}
-				try {
-					Thread.sleep(100);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+		if (mCamera != null) {
+			try {
+				mCamera.setPreviewDisplay(mPreview.getHolder());
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
+			//mCamera.setDisplayOrientation(0);
+			mCamera.startPreview();
 
-			return "True";
-		}
-
-		@Override
-		protected void onPostExecute(String result) {
-			if (mCamera != null) {
-				try {
-					mCamera.setPreviewDisplay(mPreview.getHolder());
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				mCamera.setDisplayOrientation(0);
-				mCamera.startPreview();
-
-				try {
-					getCameraFeatrues(mCamera);
-					setPictureFeature(mCamera);
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}else{
-				
+			try {
+				getCameraFeatrues(mCamera);
+				setPictureFeature(mCamera);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
+		} else {
+			status = false;
 		}
 
-		@Override
-		protected void onPreExecute() {
-		}
-
-		@Override
-		protected void onProgressUpdate(Integer... values) {
-		}
+		return status;
 	}
 
 	/**
@@ -270,11 +255,12 @@ public class CameraOperation {
 	public static boolean checkCameraHardware(Context context) {
 		if (context.getPackageManager().hasSystemFeature(
 				PackageManager.FEATURE_CAMERA)) {
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-				numOfCamera = Camera.getNumberOfCameras();
-			} else {
-				numOfCamera = 1;
-			}
+			/*
+			 * if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+			 * numOfCamera = Camera.getNumberOfCameras(); } else { numOfCamera =
+			 * 1; }
+			 */
+			numOfCamera = 1;
 			// this device has a camera
 			return true;
 		} else {
@@ -295,6 +281,7 @@ public class CameraOperation {
 	}
 
 	public static void releaseCamera() {
+		Log.d(TAG, "try release camera:" + (mCamera == null ? "False" : "True"));
 		if (mCamera != null) {
 			CameraPreview.UpdateCamera(null);
 			mCamera.stopPreview();
@@ -407,7 +394,6 @@ public class CameraOperation {
 						// MediaRecorder
 
 		releaseCamera();
-		reGetCameraWithRetry();
 	}
 
 	/* Checks if external storage is available for read and write */
@@ -451,7 +437,7 @@ public class CameraOperation {
 			cameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
 		}
 
-		cameraParameters.setZoom(zoomValue);
+		cameraParameters.setZoom(zoomIndex);
 		mCamera.setParameters(cameraParameters);
 	}
 
@@ -477,7 +463,7 @@ public class CameraOperation {
 			cameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
 		}
 
-		cameraParameters.setZoom(zoomValue);
+		cameraParameters.setZoom(zoomIndex);
 		mCamera.setParameters(cameraParameters);
 	}
 
@@ -496,7 +482,8 @@ public class CameraOperation {
 				cameraParameters.setZoom(currentZoom);
 				mCamera.setParameters(cameraParameters);
 
-				zoomValue = currentZoom;
+				zoomIndex = currentZoom;
+
 				status = true;
 			}
 		}
@@ -519,11 +506,29 @@ public class CameraOperation {
 				cameraParameters.setZoom(currentZoom);
 				mCamera.setParameters(cameraParameters);
 
-				zoomValue = currentZoom;
+				zoomIndex = currentZoom;
+
 				status = true;
 			}
 		}
 		return status;
+	}
+
+	/**
+	 * get the zoom ratio of the current camera
+	 * 
+	 * @return zoom ratio
+	 */
+	public int getCurrentzoomIndex() {
+		int zoomRatio;
+
+		if (zoomRatios == null) {
+			Parameters cameraParameters;
+			cameraParameters = mCamera.getParameters();
+			zoomRatios = cameraParameters.getZoomRatios();
+		}
+		zoomRatio = zoomRatios.get(zoomIndex);
+		return zoomRatio;
 	}
 
 	public <T> byte[] convertList2String(List<T> dat, String Title) {
@@ -587,8 +592,8 @@ public class CameraOperation {
 					+ "info.txt");
 
 			if (infoFile.exists()) {
-				infoFile.delete();
-				// return;
+				// infoFile.delete();
+				return;
 			}
 
 			/* dump all the information to a file */
