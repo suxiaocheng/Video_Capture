@@ -1291,6 +1291,10 @@ containing a value of this type.
         /**  Capture Video delay to start settings 
          */
         public static final int pref_start_capture_time_title=0x7f0b001d;
+        /**  Video focus suport setting 
+         */
+        public static final int pref_video_focus_support_recommendations=0x7f0b0024;
+        public static final int pref_video_focus_support_setting=0x7f0b0025;
         public static final int title_activity_settings=0x7f0b001a;
     }
     public static final class style {
@@ -1525,7 +1529,6 @@ containing a value of this type.
     }
     public static final class xml {
         public static final int pref_general=0x7f050000;
-        public static final int preferences=0x7f050001;
     }
     public static final class styleable {
         /**  ============================================ 

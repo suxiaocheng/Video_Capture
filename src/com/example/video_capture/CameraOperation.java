@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -20,7 +21,6 @@ import android.hardware.Camera.Size;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
@@ -45,10 +45,13 @@ public class CameraOperation {
 
 	/* changeable feature list */
 	private List<Integer> zoomRatios;
-	private int zoomIndex;
+	private static int zoomIndex = 0;
+
+	boolean cameraFocusLock;
 
 	public CameraOperation(CameraPreview cp) {
 		mPreview = cp;
+		cameraFocusLock = false;
 	}
 
 	public void focusCameraAgain() {
@@ -195,7 +198,8 @@ public class CameraOperation {
 	}
 
 	/**
-	/* reget the camera handle with retry. Timeout is 2 sec; */
+	 * /* reget the camera handle with retry. Timeout is 2 sec;
+	 */
 	public boolean reGetCameraWithRetry() {
 		int retryCount = 0;
 		// reget the camera immediately on pause event
@@ -354,6 +358,38 @@ public class CameraOperation {
 				}
 			}).start();
 		}
+	}
+
+	public boolean takePictureContinus(boolean need_focus) {
+		synchronized (this) {
+			if(cameraFocusLock == false){
+				cameraFocusLock = true;
+			}else{
+				return false;
+			}
+		}
+		if (need_focus == true) {
+			mCamera.autoFocus(new AutoFocusCallback() {
+				public void onAutoFocus(boolean success, Camera camera) {
+					if (success) {
+						synchronized (this) {
+							mCamera.takePicture(null, null, mPicture);
+							mCamera.startPreview();
+							cameraFocusLock = false;
+						}
+					}
+				}
+			});
+		} else {
+			synchronized (this) {
+				// get an image from the camera
+				mCamera.takePicture(null, null, mPicture);
+				mCamera.startPreview();
+				cameraFocusLock = false;
+			}
+		}
+
+		return true;
 	}
 
 	private PictureCallback mPicture = new PictureCallback() {

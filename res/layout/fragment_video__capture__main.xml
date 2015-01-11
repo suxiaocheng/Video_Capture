@@ -54,7 +54,7 @@
         <Button
             android:id="@+id/zoomOut"
             style="android:buttonStyle"
-            android:layout_width="wrap_content"
+            android:layout_width="80dp"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
             android:layout_alignParentStart="false"
@@ -63,7 +63,7 @@
         <Button
             android:id="@+id/zoomIn"
             style="android:buttonStyle"
-            android:layout_width="wrap_content"
+            android:layout_width="80dp"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
             android:layout_alignParentStart="false"

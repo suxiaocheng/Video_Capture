@@ -13,6 +13,7 @@ public class CameraSetting {
 	private static final String PREF_DELAY_CAPTURE_TIME = "delay_capture_time";
 	private static final String PREF_START_CAPTURE_TIME = "start_capture_time";
 	private static final String PREF_VIDEO_QUALITY = "capture_video_quality";
+	private static final String PREF_VIDEO_AUTO_FOCUS = "video_focus_support";
 	private static final Boolean DEBUG_MODE = false;
 
 	Context context;
@@ -30,6 +31,16 @@ public class CameraSetting {
 		
 		PreferenceManager.setDefaultValues(context, R.xml.pref_general,
 				DEBUG_MODE);
+	}
+	
+	public boolean GetVideoAutofocusEnable() {
+		if (preference == null) {
+			Log.d(TAG, "preference null");
+			return false;
+		}
+		boolean tmp = preference.getBoolean(PREF_VIDEO_AUTO_FOCUS, false);
+
+		return tmp;
 	}
 
 	public int GetCaptureVideoQuality() {

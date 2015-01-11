@@ -40,5 +40,10 @@
         <item>5</item>
         <item>6</item>
     </string-array>
+    
+    <!-- Video focus suport setting -->
+    <string name="pref_video_focus_support_recommendations">Enable Video focus every 10 seconds</string>
+    <string name="pref_video_focus_support_setting">Video focus Enable</string>
+    
 
 </resources>

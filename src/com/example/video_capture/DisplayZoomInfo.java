@@ -7,14 +7,15 @@ import android.util.Log;
 import android.widget.TextView;
 
 public class DisplayZoomInfo extends AsyncTask<Void, Void, String> {
-	
+
 	public static final String TAG = "DisplayZoomInfo";
-	
+
 	private TextView infoZoomTW;
 	private double zoomRatio;
 	private int infoShowDelayTime = 0;
 	private ReentrantLock resourcesAssessLock;
 	private Object zoomWait;
+	private boolean cancelFlag = false;
 
 	public DisplayZoomInfo(TextView tw, double d, int time) {
 		infoZoomTW = tw;
@@ -71,11 +72,21 @@ public class DisplayZoomInfo extends AsyncTask<Void, Void, String> {
 		return status;
 	}
 
+	public void setTreadExit() {
+		resourcesAssessLock.lock();
+		cancelFlag = true;
+		resourcesAssessLock.unlock();
+		synchronized (zoomWait) {
+			zoomWait.notify();
+		}
+	}
+
 	@Override
 	protected String doInBackground(Void... params) {
 		while (true) {
 			resourcesAssessLock.lock();
 			if (infoShowDelayTime > 0) {
+				Log.d(TAG, "tick:" + infoShowDelayTime);
 				infoShowDelayTime--;
 				resourcesAssessLock.unlock();
 				if (isCancelled() == true) {
@@ -102,9 +113,16 @@ public class DisplayZoomInfo extends AsyncTask<Void, Void, String> {
 				if (isCancelled() == true) {
 					break;
 				}
+				resourcesAssessLock.lock();
+				if (cancelFlag == true) {
+					resourcesAssessLock.unlock();
+					break;
+				}
+				resourcesAssessLock.unlock();
 			}
 		}
-		
+
+		infoZoomTW.setVisibility(TextView.INVISIBLE);
 		Log.d(TAG, "Zoom thread exist normally");
 
 		return "TRUE";

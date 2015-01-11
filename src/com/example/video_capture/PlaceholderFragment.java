@@ -48,7 +48,7 @@ public class PlaceholderFragment extends Fragment {
 
 	/* display zoom info class */
 	private DisplayZoomInfo diplayZoomInfo;
-	
+
 	/* progress bar use for indicate the busy state of getting the camera */
 	private ProgressBar prgressBarGettingCamera;
 
@@ -56,9 +56,15 @@ public class PlaceholderFragment extends Fragment {
 
 	/* camera video capture process state */
 	private static final int PROCESS_FREE = 0x00;
-	private static final int PROCESS_DELAY = 0x01;
-	private static final int PROCESS_CAPTURE = 0x02;
-	private static final int PROCESS_STARTED = 0x03;
+	private static final int PROCESS_DELAY_VIDEO = 0x01;
+	private static final int PROCESS_DELAY_PICTURE = 0x02;
+	private static final int PROCESS_CAPTURE_VIDEO = 0x03;
+	private static final int PROCESS_STARTED = 0x04;
+	private static final int PROCESS_CAPTURE_PIC_CONTINUS = 0x05;
+
+	/* camera taken type : picture or video */
+	private static final int CAPTURE_TYPE_VIDEO = 0x00;
+	private static final int CAPTURE_TYPE_PICTURE = 0x01;
 
 	private int isRecording;
 
@@ -93,6 +99,9 @@ public class PlaceholderFragment extends Fragment {
 
 		Log.d(TAG, "onResume");
 
+		diplayZoomInfo = new DisplayZoomInfo(zoomInfoTW, 0, 0);
+		diplayZoomInfo.execute();
+
 		cameraOperation = new CameraOperation(mPreview);
 
 		reGetCameraWithRetry();
@@ -106,22 +115,24 @@ public class PlaceholderFragment extends Fragment {
 	public void onPause() {
 		Log.d(TAG, "onPause");
 
-		if (diplayZoomInfo.cancel(true) == true) {
-
-		}
+		diplayZoomInfo.setTreadExit();
 
 		captureCameraLock.lock();
 		if (isRecording == PROCESS_FREE) {
 			// release the camera immediately on pause event
 			CameraOperation.releaseCamera();
-		} else if (isRecording == PROCESS_DELAY) {
+		} else if (isRecording == PROCESS_DELAY_VIDEO) {
 
-		} else if (isRecording == PROCESS_CAPTURE) {
+		} else if (isRecording == PROCESS_DELAY_PICTURE) {
+
+		} else if (isRecording == PROCESS_CAPTURE_VIDEO) {
 			cameraOperation.stopVideoCapture();
+			isRecording = PROCESS_FREE;
+		} else if (isRecording == PROCESS_CAPTURE_PIC_CONTINUS) {
 			isRecording = PROCESS_FREE;
 		}
 		captureCameraLock.unlock();
-		
+
 		super.onPause();
 	}
 
@@ -152,20 +163,45 @@ public class PlaceholderFragment extends Fragment {
 		captureTimeTW = (TextView) rootView.findViewById(R.id.capture_info);
 
 		zoomInfoTW = (TextView) rootView.findViewById(R.id.zoom_info);
-		diplayZoomInfo = new DisplayZoomInfo(zoomInfoTW, 0, 0);
-		diplayZoomInfo.execute();
 
 		captureVideoButtonI = (Button) rootView.findViewById(R.id.button2);
 		captureButtonI = (Button) rootView.findViewById(R.id.button1);
-		
-		prgressBarGettingCamera = (ProgressBar) rootView.findViewById(R.id.loadingProgress);
+
+		prgressBarGettingCamera = (ProgressBar) rootView
+				.findViewById(R.id.loadingProgress);
 
 		// Add a listener to the Capture button
 		captureButton = (Button) rootView.findViewById(R.id.button_capture);
 		captureButton.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				cameraOperation.focusTakePicture();
+				if (captureCameraLock.tryLock() == false) {
+					return;
+				}
+				if (isRecording == PROCESS_FREE) {
+					if (cameraSetting.GetScreenLock() == false) {
+						GetScreenOnLock();
+					}
+
+					int delay_time = cameraSetting.GetDelayCaptureTime();
+					if (delay_time > 0) {
+						isRecording = PROCESS_DELAY_PICTURE;
+						CameraDelayOperation asyncTask = new CameraDelayOperation();
+						asyncTask.execute(delay_time);
+
+						setButtonStatus(isRecording);
+					} else {
+						cameraOperation.focusTakePicture();
+					}
+				} else if (isRecording == PROCESS_CAPTURE_PIC_CONTINUS) {
+					isRecording = PROCESS_FREE;
+					setButtonStatus(isRecording);
+				} else {
+					/* should never run here */
+					Log.e(TAG, "Error click on the capture button");
+				}
+				captureCameraLock.unlock();
+				// cameraOperation.focusTakePicture();
 			}
 		});
 
@@ -178,7 +214,7 @@ public class PlaceholderFragment extends Fragment {
 				if (captureCameraLock.tryLock() == false) {
 					return;
 				}
-				if (isRecording == PROCESS_CAPTURE) {
+				if (isRecording == PROCESS_CAPTURE_VIDEO) {
 					isRecording = PROCESS_FREE;
 
 					cameraOperation.stopVideoCapture();
@@ -191,16 +227,16 @@ public class PlaceholderFragment extends Fragment {
 
 					int delay_time = cameraSetting.GetDelayCaptureTime();
 					if (delay_time > 0) {
-						isRecording = PROCESS_DELAY;
+						isRecording = PROCESS_DELAY_VIDEO;
 						CameraDelayOperation asyncTask = new CameraDelayOperation();
 						asyncTask.execute(delay_time);
 					} else {
-						isRecording = PROCESS_CAPTURE;
+						isRecording = PROCESS_CAPTURE_VIDEO;
 						if (startVideoRecording() == false) {
 							isRecording = PROCESS_FREE;
 						}
 					}
-				} else if (isRecording == PROCESS_DELAY) {
+				} else if (isRecording == PROCESS_DELAY_VIDEO) {
 					isRecording = PROCESS_FREE;
 				}
 
@@ -251,7 +287,7 @@ public class PlaceholderFragment extends Fragment {
 						cameraOperation.getCurrentzoomIndex() / 100.0, 3);
 			}
 		});
-		
+
 		isRecording = PROCESS_STARTED;
 		setButtonStatus(isRecording);
 
@@ -259,34 +295,37 @@ public class PlaceholderFragment extends Fragment {
 	}
 
 	private void setButtonStatus(int status) {
-		
-		if(status != PROCESS_STARTED){
+
+		Log.d(TAG, "Button status:" + status);
+
+		if (status != PROCESS_STARTED) {
 			zoomInButton.setEnabled(true);
 			zoomOutButton.setEnabled(true);
 			prgressBarGettingCamera.setVisibility(View.INVISIBLE);
-		}else{
+		} else {
 			zoomInButton.setEnabled(false);
 			zoomOutButton.setEnabled(false);
 			prgressBarGettingCamera.setVisibility(View.VISIBLE);
 		}
-		
+
 		/* Reset the UI to the right state */
 		if (status == PROCESS_FREE) {
 			/* Enable other button */
 			captureVideoButtonI.setEnabled(true);
 			captureButtonI.setEnabled(true);
+
 			captureButton.setEnabled(true);
+			captureButton.setText("Capture Picture");
 
 			captureVideoButton.setEnabled(true);
 			captureVideoButton.setText("Capture Video");
-			
 
 			/* Release the screen lock */
 			if (cameraSetting.GetScreenLock() == false) {
 				ReleaseScreenOnLock();
 			}
 
-		} else if (status == PROCESS_CAPTURE) {
+		} else if (status == PROCESS_CAPTURE_VIDEO) {
 			/* Enable other button */
 			captureVideoButtonI.setEnabled(false);
 			captureButtonI.setEnabled(false);
@@ -294,7 +333,7 @@ public class PlaceholderFragment extends Fragment {
 
 			captureVideoButton.setEnabled(true);
 			captureVideoButton.setText("Capture Stop");
-		} else if (status == PROCESS_DELAY) {
+		} else if (status == PROCESS_DELAY_VIDEO) {
 			/* Enable other button */
 			captureVideoButtonI.setEnabled(false);
 			captureButtonI.setEnabled(false);
@@ -302,12 +341,28 @@ public class PlaceholderFragment extends Fragment {
 
 			captureVideoButton.setEnabled(true);
 			captureVideoButton.setText("Capture Cancel");
+		} else if (status == PROCESS_DELAY_PICTURE) {
+			/* Enable other button */
+			captureVideoButtonI.setEnabled(false);
+			captureButtonI.setEnabled(false);
+			captureVideoButton.setEnabled(false);
+
+			captureButton.setEnabled(true);
+			captureButton.setText("Capture Cancel");
 		} else if (status == PROCESS_STARTED) {
 			/* Just started, disable all button */
 			captureVideoButtonI.setEnabled(false);
 			captureButtonI.setEnabled(false);
 			captureButton.setEnabled(false);
 			captureVideoButtonI.setEnabled(false);
+		} else if (status == PROCESS_CAPTURE_PIC_CONTINUS) {
+			/* Enable other button */
+			captureVideoButtonI.setEnabled(false);
+			captureButtonI.setEnabled(false);
+			captureVideoButton.setEnabled(false);
+
+			captureButton.setEnabled(true);
+			captureButton.setText("Capture stop");
 		} else {
 			Log.d(TAG, "setButtonStatus: Unknow status");
 		}
@@ -316,18 +371,18 @@ public class PlaceholderFragment extends Fragment {
 	/* reget the camera handle with async task */
 	public boolean reGetCameraWithRetry() {
 		int delay_time = 50;
-		
+
 		isRecording = PROCESS_STARTED;
 		setButtonStatus(isRecording);
-		
-		if(cameraOperation.reGetCameraWithRetry() == false){
+
+		if (cameraOperation.reGetCameraWithRetry() == false) {
 			Log.d(TAG, "reGetCameraWithRetry fail, camera instance is null");
 			capture_main.finish();
 		}
-		
+
 		isRecording = PROCESS_FREE;
 		setButtonStatus(isRecording);
-		
+
 		return true;
 	}
 
@@ -378,12 +433,20 @@ public class PlaceholderFragment extends Fragment {
 
 			captureCameraLock.lock();
 			captureDelayTimeTW.setVisibility(TextView.INVISIBLE);
-			if (isRecording != PROCESS_FREE) {
-				status = startVideoRecording();
-			}
+			if (isRecording == PROCESS_DELAY_VIDEO) {
+				if (isRecording != PROCESS_FREE) {
+					status = startVideoRecording();
+				}
 
-			if (status == false) {
-				isRecording = PROCESS_FREE;
+				if (status == false) {
+					isRecording = PROCESS_FREE;
+				}
+			} else if (isRecording == PROCESS_DELAY_PICTURE) {
+				if (isRecording != PROCESS_FREE) {
+					isRecording = PROCESS_CAPTURE_PIC_CONTINUS;
+				}
+				new CameraPictureContinusCaptureOperation(
+						cameraSetting.GetStartCaptureTime()).execute(0);
 			}
 
 			setButtonStatus(isRecording);
@@ -414,6 +477,95 @@ public class PlaceholderFragment extends Fragment {
 			str = String.format("Capture after:%4d:%2d:%2d", tmp.hour,
 					tmp.minute, tmp.second);
 			captureDelayTimeTW.setText(str);
+		}
+	}
+
+	private class CameraPictureContinusCaptureOperation extends
+			AsyncTask<Integer, Integer, String> {
+
+		private Time startupTime;
+		private Time currentTime;
+		private int captureTime;
+		private int pictrueCount = 0;
+
+		public CameraPictureContinusCaptureOperation(int cp) {
+			startupTime = new Time();
+			currentTime = new Time();
+			startupTime.setToNow();
+
+			captureTime = cp;
+		}
+
+		@Override
+		protected String doInBackground(Integer... params) {
+			int time_interval;
+			int focus_count = 0;
+			int focus_max_set = 20;
+			boolean takePicStatus;
+
+			do {
+				currentTime.setToNow();
+				time_interval = (int) ((currentTime.toMillis(true) - startupTime
+						.toMillis(true)) / 1000);
+				publishProgress(time_interval);
+				try {
+					Thread.sleep(5000);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch
+					// block
+					e.printStackTrace();
+				}
+				if (isRecording == PROCESS_FREE) {
+					break;
+				}
+				/*
+				if (focus_count == 0) {
+					focus_count = focus_max_set;
+					// cameraOperation.focusCameraAgain();
+					takePicStatus = cameraOperation.takePictureContinus(true);
+				} else {
+					takePicStatus = cameraOperation.takePictureContinus(false);
+				}
+				if (takePicStatus == true) {
+					pictrueCount++;
+				}*/
+				cameraOperation.focusTakePicture();
+			} while ((captureTime == 0) || (captureTime > time_interval));
+
+			return "Executed";
+		}
+
+		@Override
+		protected void onPostExecute(String result) {
+			captureTimeTW.setVisibility(TextView.INVISIBLE);
+			captureCameraLock.lock();
+			if (isRecording != PROCESS_FREE) {
+				isRecording = PROCESS_FREE;
+
+				setButtonStatus(isRecording);
+			}
+			captureCameraLock.unlock();
+		}
+
+		@Override
+		protected void onPreExecute() {
+			captureTimeTW.setText(null);
+			captureTimeTW.setVisibility(TextView.VISIBLE);
+			captureTimeTW.setTextColor(Color.rgb(255, 0, 0));
+		}
+
+		@Override
+		protected void onProgressUpdate(Integer... values) {
+			String str = new String();
+			Time tmp = new Time();
+			tmp.hour = values[0].intValue() / 3600;
+			tmp.minute = (values[0].intValue() - tmp.hour * 3600) / 60;
+			tmp.second = values[0].intValue() - tmp.hour * 3600 - tmp.minute
+					* 60;
+
+			str = String.format("Capture Time:%4d:%2d:%2d", tmp.hour,
+					tmp.minute, tmp.second);
+			captureTimeTW.setText(str);
 		}
 	}
 
@@ -455,7 +607,9 @@ public class PlaceholderFragment extends Fragment {
 				}
 				if (--auto_focus_count == 0) {
 					auto_focus_count = 10;
-					cameraOperation.focusCameraAgain();
+					if (cameraSetting.GetVideoAutofocusEnable() == true) {
+						cameraOperation.focusCameraAgain();
+					}
 				}
 			} while ((captureTime == 0) || (captureTime > time_interval));
 
