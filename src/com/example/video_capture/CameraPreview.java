@@ -38,7 +38,7 @@ public class CameraPreview extends SurfaceView implements
 	}
 
 	public void surfaceCreated(SurfaceHolder holder) {
-		// The Surface has been created, now tell the camera where to draw the
+		// The Surface has been created, now tell the camera where to draw thee
 		// preview.
 		Log.d(TAG, "surfaceCreated");
 		if (mCamera == null) {

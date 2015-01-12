@@ -23,6 +23,7 @@ import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.text.format.Time;
 import android.util.Log;
 import android.view.Surface;
 
@@ -41,11 +42,13 @@ public class CameraOperation {
 	private CameraPreview mPreview;
 
 	/* reverse for future, and this value can be change */
-	private int picturePreviewTime = 0x02;
+	private int picturePreviewTime = 0x01;
 
 	/* changeable feature list */
 	private List<Integer> zoomRatios;
 	private static int zoomIndex = 0;
+
+	private long startTakePictureTime, endTakePictureTime;
 
 	boolean cameraFocusLock;
 
@@ -221,17 +224,7 @@ public class CameraOperation {
 					break;
 				}
 			}
-			if (mCamera != null) {
-				try {
-					mCamera.setPreviewDisplay(mPreview.getHolder());
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				mCamera.setDisplayOrientation(0);
-				mCamera.startPreview();
-				Log.d(TAG, "onResume sucessfully");
-			}
+			putCameraPreviewState();
 		}
 		if (mCamera != null) {
 			try {
@@ -243,6 +236,20 @@ public class CameraOperation {
 			}
 		}
 		return (mCamera == null) ? false : true;
+	}
+	
+	public void putCameraPreviewState(){
+		if (mCamera != null) {
+			try {
+				mCamera.setPreviewDisplay(mPreview.getHolder());
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			mCamera.setDisplayOrientation(0);
+			mCamera.startPreview();
+			Log.d(TAG, "Preview sucessfully");
+		}
 	}
 
 	/**
@@ -360,32 +367,63 @@ public class CameraOperation {
 		}
 	}
 
+	private long getCurrentTimeStamp() {
+		long timeStamp = 0;
+
+		/* Get the system timestamp for debug */
+		Time startupTime;
+		startupTime = new Time();
+		startupTime.setToNow();
+		timeStamp = startupTime.toMillis(true);
+
+		return timeStamp;
+	}
+
+	public boolean checkForAvailStatus() {
+		synchronized (this) {
+			if (cameraFocusLock == false) {
+				return true;
+			}
+			return false;
+		}
+	}
+
 	public boolean takePictureContinus(boolean need_focus) {
 		synchronized (this) {
-			if(cameraFocusLock == false){
+			if (cameraFocusLock == false) {
 				cameraFocusLock = true;
-			}else{
+			} else {
 				return false;
 			}
 		}
+
+		startTakePictureTime = getCurrentTimeStamp();
+
 		if (need_focus == true) {
 			mCamera.autoFocus(new AutoFocusCallback() {
 				public void onAutoFocus(boolean success, Camera camera) {
 					if (success) {
+						mCamera.takePicture(null, null, mPicture);
+						//mCamera.startPreview();
 						synchronized (this) {
-							mCamera.takePicture(null, null, mPicture);
-							mCamera.startPreview();
 							cameraFocusLock = false;
+							endTakePictureTime = getCurrentTimeStamp();
+							Log.d(TAG,
+									"Auto Focus Taken Picture Time:"
+											+ (endTakePictureTime - startTakePictureTime));
 						}
 					}
 				}
 			});
 		} else {
+			// get an image from the camera
+			mCamera.takePicture(null, null, mPicture);
+			//mCamera.startPreview();
 			synchronized (this) {
-				// get an image from the camera
-				mCamera.takePicture(null, null, mPicture);
-				mCamera.startPreview();
 				cameraFocusLock = false;
+				endTakePictureTime = getCurrentTimeStamp();
+				Log.d(TAG, "Auto Focus Taken Picture Time:"
+						+ (endTakePictureTime - startTakePictureTime));
 			}
 		}
 

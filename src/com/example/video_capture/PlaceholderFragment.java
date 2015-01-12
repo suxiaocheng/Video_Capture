@@ -110,6 +110,30 @@ public class PlaceholderFragment extends Fragment {
 			GetScreenOnLock();
 		}
 	}
+	
+	public void killCurrentActivity(){
+		Log.d(TAG, "killCurrentActivity");
+
+		diplayZoomInfo.setTreadExit();
+
+		captureCameraLock.lock();
+		if (isRecording == PROCESS_FREE) {
+			// release the camera immediately on pause event
+			CameraOperation.releaseCamera();
+		} else if (isRecording == PROCESS_DELAY_VIDEO) {
+
+		} else if (isRecording == PROCESS_DELAY_PICTURE) {
+
+		} else if (isRecording == PROCESS_CAPTURE_VIDEO) {
+			cameraOperation.stopVideoCapture();
+			isRecording = PROCESS_FREE;
+		} else if (isRecording == PROCESS_CAPTURE_PIC_CONTINUS) {
+			isRecording = PROCESS_FREE;
+		}
+		captureCameraLock.unlock();
+		
+		capture_main.finish();
+	} 
 
 	@Override
 	public void onPause() {
@@ -509,7 +533,7 @@ public class PlaceholderFragment extends Fragment {
 						.toMillis(true)) / 1000);
 				publishProgress(time_interval);
 				try {
-					Thread.sleep(5000);
+					Thread.sleep(100);
 				} catch (InterruptedException e) {
 					// TODO Auto-generated catch
 					// block
@@ -529,8 +553,43 @@ public class PlaceholderFragment extends Fragment {
 				if (takePicStatus == true) {
 					pictrueCount++;
 				}*/
-				cameraOperation.focusTakePicture();
+				//cameraOperation.focusTakePicture();
+				if(cameraOperation.checkForAvailStatus() == true){
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch
+						// block
+						e.printStackTrace();
+					}
+					if (isRecording == PROCESS_FREE) {
+						break;
+					}
+					cameraOperation.takePictureContinus(true);
+				}
 			} while ((captureTime == 0) || (captureTime > time_interval));
+			
+			/* wait until the last take picture action over */
+			while(cameraOperation.checkForAvailStatus() == false){
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch
+					// block
+					e.printStackTrace();
+				}
+			}
+			
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch
+				// block
+				e.printStackTrace();
+			}
+			
+			/* post operation, put the camera into preview state*/
+			cameraOperation.putCameraPreviewState();
 
 			return "Executed";
 		}
@@ -545,6 +604,8 @@ public class PlaceholderFragment extends Fragment {
 				setButtonStatus(isRecording);
 			}
 			captureCameraLock.unlock();
+
+			killCurrentActivity();
 		}
 
 		@Override
@@ -629,6 +690,8 @@ public class PlaceholderFragment extends Fragment {
 				setButtonStatus(isRecording);
 			}
 			captureCameraLock.unlock();
+			
+			killCurrentActivity();
 		}
 
 		@Override
