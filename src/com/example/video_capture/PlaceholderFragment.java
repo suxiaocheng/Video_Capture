@@ -110,8 +110,8 @@ public class PlaceholderFragment extends Fragment {
 			GetScreenOnLock();
 		}
 	}
-	
-	public void killCurrentActivity(){
+
+	public void killCurrentActivity() {
 		Log.d(TAG, "killCurrentActivity");
 
 		diplayZoomInfo.setTreadExit();
@@ -131,9 +131,9 @@ public class PlaceholderFragment extends Fragment {
 			isRecording = PROCESS_FREE;
 		}
 		captureCameraLock.unlock();
-		
+
 		capture_main.finish();
-	} 
+	}
 
 	@Override
 	public void onPause() {
@@ -218,6 +218,9 @@ public class PlaceholderFragment extends Fragment {
 						cameraOperation.focusTakePicture();
 					}
 				} else if (isRecording == PROCESS_CAPTURE_PIC_CONTINUS) {
+					isRecording = PROCESS_FREE;
+					setButtonStatus(isRecording);
+				} else if (isRecording == PROCESS_DELAY_PICTURE) {
 					isRecording = PROCESS_FREE;
 					setButtonStatus(isRecording);
 				} else {
@@ -404,6 +407,13 @@ public class PlaceholderFragment extends Fragment {
 			capture_main.finish();
 		}
 
+		/* reset the picture quality */
+		cameraOperation.setCapturePictureSize(cameraSetting
+				.GetCapturePictureQuality());
+
+		Log.d(TAG,
+				"Picture quality:" + cameraSetting.GetCapturePictureQuality());
+
 		isRecording = PROCESS_FREE;
 		setButtonStatus(isRecording);
 
@@ -523,9 +533,6 @@ public class PlaceholderFragment extends Fragment {
 		@Override
 		protected String doInBackground(Integer... params) {
 			int time_interval;
-			int focus_count = 0;
-			int focus_max_set = 20;
-			boolean takePicStatus;
 
 			do {
 				currentTime.setToNow();
@@ -542,19 +549,7 @@ public class PlaceholderFragment extends Fragment {
 				if (isRecording == PROCESS_FREE) {
 					break;
 				}
-				/*
-				if (focus_count == 0) {
-					focus_count = focus_max_set;
-					// cameraOperation.focusCameraAgain();
-					takePicStatus = cameraOperation.takePictureContinus(true);
-				} else {
-					takePicStatus = cameraOperation.takePictureContinus(false);
-				}
-				if (takePicStatus == true) {
-					pictrueCount++;
-				}*/
-				//cameraOperation.focusTakePicture();
-				if(cameraOperation.checkForAvailStatus() == true){
+				if (cameraOperation.checkForAvailStatus() == true) {
 					try {
 						Thread.sleep(1000);
 					} catch (InterruptedException e) {
@@ -568,9 +563,9 @@ public class PlaceholderFragment extends Fragment {
 					cameraOperation.takePictureContinus(true);
 				}
 			} while ((captureTime == 0) || (captureTime > time_interval));
-			
+
 			/* wait until the last take picture action over */
-			while(cameraOperation.checkForAvailStatus() == false){
+			while (cameraOperation.checkForAvailStatus() == false) {
 				try {
 					Thread.sleep(100);
 				} catch (InterruptedException e) {
@@ -579,7 +574,7 @@ public class PlaceholderFragment extends Fragment {
 					e.printStackTrace();
 				}
 			}
-			
+
 			try {
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
@@ -587,8 +582,8 @@ public class PlaceholderFragment extends Fragment {
 				// block
 				e.printStackTrace();
 			}
-			
-			/* post operation, put the camera into preview state*/
+
+			/* post operation, put the camera into preview state */
 			cameraOperation.putCameraPreviewState();
 
 			return "Executed";
@@ -690,7 +685,7 @@ public class PlaceholderFragment extends Fragment {
 				setButtonStatus(isRecording);
 			}
 			captureCameraLock.unlock();
-			
+
 			killCurrentActivity();
 		}
 

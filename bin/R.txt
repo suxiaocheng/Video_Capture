@@ -4,6 +4,8 @@ int anim abc_slide_in_bottom 0x7f040002
 int anim abc_slide_in_top 0x7f040003
 int anim abc_slide_out_bottom 0x7f040004
 int anim abc_slide_out_top 0x7f040005
+int array pref_capture_picture_quility_titles 0x7f0d0003
+int array pref_capture_picture_quility_values 0x7f0d0004
 int array pref_capture_video_quility_titles 0x7f0d0001
 int array pref_capture_video_quility_values 0x7f0d0002
 int array pref_focusModeTitle_values 0x7f0d0000
@@ -365,6 +367,7 @@ int string capture_image_using_preview 0x7f0b0012
 int string capture_video_using_internel_camera 0x7f0b0011
 int string capture_video_using_preview 0x7f0b0013
 int string hello_world 0x7f0b000e
+int string pref_capture_picture_quility_header 0x7f0b0024
 int string pref_capture_time_dialog_title 0x7f0b0021
 int string pref_capture_time_title 0x7f0b0020
 int string pref_capture_video_quility_header 0x7f0b0023
@@ -377,8 +380,8 @@ int string pref_screen_always_on_recommendations 0x7f0b001c
 int string pref_screen_always_on_setting 0x7f0b001b
 int string pref_start_capture_time_dialog_title 0x7f0b001e
 int string pref_start_capture_time_title 0x7f0b001d
-int string pref_video_focus_support_recommendations 0x7f0b0024
-int string pref_video_focus_support_setting 0x7f0b0025
+int string pref_video_focus_support_recommendations 0x7f0b0025
+int string pref_video_focus_support_setting 0x7f0b0026
 int string title_activity_settings 0x7f0b001a
 int style AppBaseTheme 0x7f0c008b
 int style AppTheme 0x7f0c008c

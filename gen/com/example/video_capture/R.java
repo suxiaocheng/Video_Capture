@@ -17,6 +17,8 @@ public final class R {
         public static final int abc_slide_out_top=0x7f040005;
     }
     public static final class array {
+        public static final int pref_capture_picture_quility_titles=0x7f0d0003;
+        public static final int pref_capture_picture_quility_values=0x7f0d0004;
         public static final int pref_capture_video_quility_titles=0x7f0d0001;
         public static final int pref_capture_video_quility_values=0x7f0d0002;
         public static final int pref_focusModeTitle_values=0x7f0d0000;
@@ -1269,6 +1271,9 @@ containing a value of this type.
         public static final int capture_video_using_internel_camera=0x7f0b0011;
         public static final int capture_video_using_preview=0x7f0b0013;
         public static final int hello_world=0x7f0b000e;
+        /**  Capture Video Quility settings 
+         */
+        public static final int pref_capture_picture_quility_header=0x7f0b0024;
         public static final int pref_capture_time_dialog_title=0x7f0b0021;
         /**  Capture Video time settings 
          */
@@ -1293,8 +1298,8 @@ containing a value of this type.
         public static final int pref_start_capture_time_title=0x7f0b001d;
         /**  Video focus suport setting 
          */
-        public static final int pref_video_focus_support_recommendations=0x7f0b0024;
-        public static final int pref_video_focus_support_setting=0x7f0b0025;
+        public static final int pref_video_focus_support_recommendations=0x7f0b0025;
+        public static final int pref_video_focus_support_setting=0x7f0b0026;
         public static final int title_activity_settings=0x7f0b001a;
     }
     public static final class style {

@@ -50,7 +50,9 @@ public class CameraOperation {
 
 	private long startTakePictureTime, endTakePictureTime;
 
-	boolean cameraFocusLock;
+	private boolean cameraFocusLock;
+
+	private List<Size> supportPictureSizes;
 
 	public CameraOperation(CameraPreview cp) {
 		mPreview = cp;
@@ -124,6 +126,10 @@ public class CameraOperation {
 		 */
 		// QUALITY_1080P = 6;
 		mMediaRecorder.setProfile(CamcorderProfile.get(quality));
+
+		// mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+		// mMediaRecorder.setVideoFrameRate(24);
+		// mMediaRecorder.setVideoSize(320, 240);
 
 		// mMediaRecorder.setProfile(CamcorderProfile
 		// .get(CamcorderProfile.QUALITY_HIGH));
@@ -237,8 +243,8 @@ public class CameraOperation {
 		}
 		return (mCamera == null) ? false : true;
 	}
-	
-	public void putCameraPreviewState(){
+
+	public void putCameraPreviewState() {
 		if (mCamera != null) {
 			try {
 				mCamera.setPreviewDisplay(mPreview.getHolder());
@@ -404,21 +410,20 @@ public class CameraOperation {
 				public void onAutoFocus(boolean success, Camera camera) {
 					if (success) {
 						mCamera.takePicture(null, null, mPicture);
-						//mCamera.startPreview();
-						synchronized (this) {
-							cameraFocusLock = false;
-							endTakePictureTime = getCurrentTimeStamp();
-							Log.d(TAG,
-									"Auto Focus Taken Picture Time:"
-											+ (endTakePictureTime - startTakePictureTime));
-						}
+						// mCamera.startPreview();
+					}
+					synchronized (this) {
+						cameraFocusLock = false;
+						endTakePictureTime = getCurrentTimeStamp();
+						Log.d(TAG, "Auto Focus Taken Picture Time:"
+								+ (endTakePictureTime - startTakePictureTime));
 					}
 				}
 			});
 		} else {
 			// get an image from the camera
 			mCamera.takePicture(null, null, mPicture);
-			//mCamera.startPreview();
+			// mCamera.startPreview();
 			synchronized (this) {
 				cameraFocusLock = false;
 				endTakePictureTime = getCurrentTimeStamp();
@@ -533,7 +538,35 @@ public class CameraOperation {
 		}
 
 		cameraParameters.setZoom(zoomIndex);
+
+		c.setParameters(cameraParameters);
+	}
+
+	public boolean setCapturePictureSize(int quality) {
+		if (mCamera == null) {
+			return false;
+		}
+
+		Parameters cameraParameters;
+		// get further information about its capabilities
+		cameraParameters = mCamera.getParameters();
+		/* set picture size for capture */
+		int width;
+		int height;
+		List<Size> picSize = cameraParameters.getSupportedPictureSizes();
+		if (picSize.size() <= quality) {
+			quality = picSize.size() - 1;
+		}
+		width = picSize.get(quality).width;
+		height = picSize.get(quality).height;
+
+		Log.d(TAG, "set picture capture width:" + width + ", height:" + height);
+
+		cameraParameters.setPictureSize(width, height);
+
 		mCamera.setParameters(cameraParameters);
+
+		return true;
 	}
 
 	public boolean zoomCameraOut() {
@@ -757,6 +790,12 @@ public class CameraOperation {
 				zoomRatios = null;
 			}
 			string_info = convertList2String(zoomRatios, "zoomRatios");
+			fOut.write(string_info);
+
+			List<Size> supportPictureSizes = cameraParameters
+					.getSupportedPictureSizes();
+			string_info = convertList2String(supportPictureSizes,
+					"supportPictureSizes");
 			fOut.write(string_info);
 
 			try {

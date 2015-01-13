@@ -41,6 +41,21 @@
         <item>6</item>
     </string-array>
     
+    <!-- Capture Video Quility settings -->
+    <string name="pref_capture_picture_quility_header">Picture Quality</string>
+    <string-array name="pref_capture_picture_quility_titles">
+        <item>Extreme Quility</item>
+        <item>High Quility</item>
+        <item>Mid Quility</item>
+        <item>Low Quility</item>
+    </string-array>
+    <string-array name="pref_capture_picture_quility_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
+    
     <!-- Video focus suport setting -->
     <string name="pref_video_focus_support_recommendations">Enable Video focus every 10 seconds</string>
     <string name="pref_video_focus_support_setting">Video focus Enable</string>
