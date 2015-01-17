@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.locks.ReentrantLock;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -17,6 +16,7 @@ import android.hardware.Camera;
 import android.hardware.Camera.AutoFocusCallback;
 import android.hardware.Camera.Parameters;
 import android.hardware.Camera.PictureCallback;
+import android.hardware.Camera.ShutterCallback;
 import android.hardware.Camera.Size;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
@@ -394,6 +394,18 @@ public class CameraOperation {
 		}
 	}
 
+	private ShutterCallback mShuttle = new ShutterCallback() {
+		@Override
+		public void onShutter() {
+			synchronized (this) {
+				cameraFocusLock = false;
+				endTakePictureTime = getCurrentTimeStamp();
+				Log.d(TAG, "Auto Focus Taken Picture Time:"
+						+ (endTakePictureTime - startTakePictureTime));
+			}
+		}
+	};
+
 	public boolean takePictureContinus(boolean need_focus) {
 		synchronized (this) {
 			if (cameraFocusLock == false) {
@@ -409,27 +421,15 @@ public class CameraOperation {
 			mCamera.autoFocus(new AutoFocusCallback() {
 				public void onAutoFocus(boolean success, Camera camera) {
 					if (success) {
-						mCamera.takePicture(null, null, mPicture);
+						mCamera.takePicture(mShuttle, null, mPicture);
 						// mCamera.startPreview();
-					}
-					synchronized (this) {
-						cameraFocusLock = false;
-						endTakePictureTime = getCurrentTimeStamp();
-						Log.d(TAG, "Auto Focus Taken Picture Time:"
-								+ (endTakePictureTime - startTakePictureTime));
 					}
 				}
 			});
 		} else {
 			// get an image from the camera
-			mCamera.takePicture(null, null, mPicture);
+			mCamera.takePicture(mShuttle, null, mPicture);
 			// mCamera.startPreview();
-			synchronized (this) {
-				cameraFocusLock = false;
-				endTakePictureTime = getCurrentTimeStamp();
-				Log.d(TAG, "Auto Focus Taken Picture Time:"
-						+ (endTakePictureTime - startTakePictureTime));
-			}
 		}
 
 		return true;
