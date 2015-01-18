@@ -16,5 +16,9 @@
     <string name="array_auto_focus">auto</string>
     <string name="array_macro_focus">macro</string>
     <string name="array_infinity_focus">infinity</string>
+    
+    
+    <!-- null string use for software -->
+    <string name="NULL"></string>
 
 </resources>

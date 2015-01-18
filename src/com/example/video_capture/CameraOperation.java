@@ -407,6 +407,8 @@ public class CameraOperation {
 	};
 
 	public boolean takePictureContinus(boolean need_focus) {
+		final ShutterCallback shutterCallback = null;
+		
 		synchronized (this) {
 			if (cameraFocusLock == false) {
 				cameraFocusLock = true;
@@ -416,22 +418,40 @@ public class CameraOperation {
 		}
 
 		startTakePictureTime = getCurrentTimeStamp();
+		
+		Log.d(TAG, "Start to take a picture");
 
 		if (need_focus == true) {
 			mCamera.autoFocus(new AutoFocusCallback() {
 				public void onAutoFocus(boolean success, Camera camera) {
 					if (success) {
-						mCamera.takePicture(mShuttle, null, mPicture);
+						mCamera.takePicture(shutterCallback, null, mPicture);
 						// mCamera.startPreview();
+					}
+					if(shutterCallback == null){
+						synchronized (this) {
+							cameraFocusLock = false;
+							endTakePictureTime = getCurrentTimeStamp();
+							Log.d(TAG, "Auto Focus Taken Picture Time:"
+									+ (endTakePictureTime - startTakePictureTime));
+						}
 					}
 				}
 			});
 		} else {
 			// get an image from the camera
-			mCamera.takePicture(mShuttle, null, mPicture);
+			mCamera.takePicture(shutterCallback, null, mPicture);
 			// mCamera.startPreview();
+			if(shutterCallback == null){
+				synchronized (this) {
+					cameraFocusLock = false;
+					endTakePictureTime = getCurrentTimeStamp();
+					Log.d(TAG, "Auto Focus Taken Picture Time:"
+							+ (endTakePictureTime - startTakePictureTime));
+				}
+			}
 		}
-
+		
 		return true;
 	}
 
@@ -456,6 +476,8 @@ public class CameraOperation {
 			} catch (IOException e) {
 				Log.d(TAG, "Error accessing file: " + e.getMessage());
 			}
+			
+			mCamera.startPreview();
 		}
 	};
 

@@ -2,9 +2,11 @@ package com.example.video_capture;
 
 import java.util.concurrent.locks.ReentrantLock;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.support.v4.app.Fragment;
@@ -42,6 +44,9 @@ public class PlaceholderFragment extends Fragment {
 
 	/* control display how long has been capture */
 	private TextView captureTimeTW;
+
+	/* control display to show how much picture has been taken */
+	private TextView capturePictureCountTW;
 
 	/* display the information of the zoom ratio */
 	private TextView zoomInfoTW;
@@ -93,6 +98,7 @@ public class PlaceholderFragment extends Fragment {
 		cameraSetting = new CameraSetting(getActivity());
 	}
 
+	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
 	@Override
 	public void onResume() {
 		super.onResume();
@@ -100,7 +106,12 @@ public class PlaceholderFragment extends Fragment {
 		Log.d(TAG, "onResume");
 
 		diplayZoomInfo = new DisplayZoomInfo(zoomInfoTW, 0, 0);
-		diplayZoomInfo.execute();
+
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+			diplayZoomInfo.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+		} else {
+			diplayZoomInfo.execute();
+		}
 
 		cameraOperation = new CameraOperation(mPreview);
 
@@ -186,6 +197,9 @@ public class PlaceholderFragment extends Fragment {
 
 		captureTimeTW = (TextView) rootView.findViewById(R.id.capture_info);
 
+		capturePictureCountTW = (TextView) rootView
+				.findViewById(R.id.capture_picture_count);
+
 		zoomInfoTW = (TextView) rootView.findViewById(R.id.zoom_info);
 
 		captureVideoButtonI = (Button) rootView.findViewById(R.id.button2);
@@ -197,6 +211,7 @@ public class PlaceholderFragment extends Fragment {
 		// Add a listener to the Capture button
 		captureButton = (Button) rootView.findViewById(R.id.button_capture);
 		captureButton.setOnClickListener(new View.OnClickListener() {
+			@TargetApi(Build.VERSION_CODES.HONEYCOMB)
 			@Override
 			public void onClick(View v) {
 				if (captureCameraLock.tryLock() == false) {
@@ -211,7 +226,13 @@ public class PlaceholderFragment extends Fragment {
 					if (delay_time > 0) {
 						isRecording = PROCESS_DELAY_PICTURE;
 						CameraDelayOperation asyncTask = new CameraDelayOperation();
-						asyncTask.execute(delay_time);
+
+						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+							asyncTask.executeOnExecutor(
+									AsyncTask.THREAD_POOL_EXECUTOR, delay_time);
+						} else {
+							asyncTask.execute(delay_time);
+						}
 
 						setButtonStatus(isRecording);
 					} else {
@@ -236,6 +257,7 @@ public class PlaceholderFragment extends Fragment {
 		captureVideoButton = (Button) rootView
 				.findViewById(R.id.button_capture_video);
 		captureVideoButton.setOnClickListener(new View.OnClickListener() {
+			@TargetApi(Build.VERSION_CODES.HONEYCOMB)
 			@Override
 			public void onClick(View v) {
 				if (captureCameraLock.tryLock() == false) {
@@ -256,7 +278,13 @@ public class PlaceholderFragment extends Fragment {
 					if (delay_time > 0) {
 						isRecording = PROCESS_DELAY_VIDEO;
 						CameraDelayOperation asyncTask = new CameraDelayOperation();
-						asyncTask.execute(delay_time);
+
+						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+							asyncTask.executeOnExecutor(
+									AsyncTask.THREAD_POOL_EXECUTOR, delay_time);
+						} else {
+							asyncTask.execute(delay_time);
+						}
 					} else {
 						isRecording = PROCESS_CAPTURE_VIDEO;
 						if (startVideoRecording() == false) {
@@ -447,6 +475,9 @@ public class PlaceholderFragment extends Fragment {
 								.toMillis(true)) / 1000);
 
 				publishProgress(time_interval);
+
+				Log.d(TAG, "CameraDelayOperation:sleep");
+
 				try {
 					Thread.sleep(1000);
 				} catch (InterruptedException e) {
@@ -454,6 +485,9 @@ public class PlaceholderFragment extends Fragment {
 					// block
 					e.printStackTrace();
 				}
+
+				Log.d(TAG, "CameraDelayOperation:wakeup");
+
 				if (isRecording == PROCESS_FREE) {
 					break;
 				}
@@ -461,6 +495,7 @@ public class PlaceholderFragment extends Fragment {
 			return "Executed";
 		}
 
+		@TargetApi(Build.VERSION_CODES.HONEYCOMB)
 		@Override
 		protected void onPostExecute(String result) {
 			boolean status = false;
@@ -481,6 +516,17 @@ public class PlaceholderFragment extends Fragment {
 				}
 				new CameraPictureContinusCaptureOperation(
 						cameraSetting.GetStartCaptureTime()).execute(0);
+
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+					new CameraPictureContinusCaptureOperation(
+							cameraSetting.GetStartCaptureTime())
+							.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,
+									0);
+				} else {
+					new CameraPictureContinusCaptureOperation(
+							cameraSetting.GetStartCaptureTime()).execute(0);
+				}
+
 			}
 
 			setButtonStatus(isRecording);
@@ -538,7 +584,7 @@ public class PlaceholderFragment extends Fragment {
 				currentTime.setToNow();
 				time_interval = (int) ((currentTime.toMillis(true) - startupTime
 						.toMillis(true)) / 1000);
-				publishProgress(time_interval);
+				publishProgress(time_interval, pictrueCount);
 				try {
 					Thread.sleep(100);
 				} catch (InterruptedException e) {
@@ -550,17 +596,19 @@ public class PlaceholderFragment extends Fragment {
 					break;
 				}
 				if (cameraOperation.checkForAvailStatus() == true) {
+
 					try {
-						Thread.sleep(500);
+						Thread.sleep(1000);
 					} catch (InterruptedException e) {
-						// TODO Auto-generated catch
-						// block
 						e.printStackTrace();
 					}
+
 					if (isRecording == PROCESS_FREE) {
 						break;
 					}
-					cameraOperation.takePictureContinus(true);
+					pictrueCount++;
+					cameraOperation
+							.takePictureContinus(true);
 				}
 			} while ((captureTime == 0) || (captureTime > time_interval));
 
@@ -592,6 +640,7 @@ public class PlaceholderFragment extends Fragment {
 		@Override
 		protected void onPostExecute(String result) {
 			captureTimeTW.setVisibility(TextView.INVISIBLE);
+			capturePictureCountTW.setVisibility(TextView.INVISIBLE);
 			captureCameraLock.lock();
 			if (isRecording != PROCESS_FREE) {
 				isRecording = PROCESS_FREE;
@@ -608,6 +657,10 @@ public class PlaceholderFragment extends Fragment {
 			captureTimeTW.setText(null);
 			captureTimeTW.setVisibility(TextView.VISIBLE);
 			captureTimeTW.setTextColor(Color.rgb(255, 0, 0));
+
+			capturePictureCountTW.setText(null);
+			capturePictureCountTW.setVisibility(TextView.VISIBLE);
+			capturePictureCountTW.setTextColor(Color.rgb(255, 255, 255));
 		}
 
 		@Override
@@ -622,6 +675,10 @@ public class PlaceholderFragment extends Fragment {
 			str = String.format("Capture Time:%4d:%2d:%2d", tmp.hour,
 					tmp.minute, tmp.second);
 			captureTimeTW.setText(str);
+
+			String str_pic_count = new String();
+			str_pic_count = String.format("PIC:%d", values[1].intValue());
+			capturePictureCountTW.setText(str_pic_count);
 		}
 	}
 
@@ -711,6 +768,7 @@ public class PlaceholderFragment extends Fragment {
 		}
 	}
 
+	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
 	public boolean startVideoRecording() {
 		boolean status = false;
 
@@ -726,9 +784,13 @@ public class PlaceholderFragment extends Fragment {
 			// now you can start recording
 			cameraOperation.mMediaRecorder.start();
 
-			new CameraCaptureOperation(cameraSetting.GetStartCaptureTime())
-					.execute(0);
-
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+				new CameraCaptureOperation(cameraSetting.GetStartCaptureTime())
+						.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, 0);
+			} else {
+				new CameraCaptureOperation(cameraSetting.GetStartCaptureTime())
+						.execute(0);
+			}
 		} else {
 			CameraOperation.releaseCamera();
 			// prepare didn't work, release the camera

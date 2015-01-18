@@ -1098,17 +1098,18 @@ containing a value of this type.
         public static final int action_menu_divider=0x7f060016;
         public static final int action_menu_presenter=0x7f060017;
         public static final int action_mode_close_button=0x7f060024;
-        public static final int action_settings=0x7f06004a;
+        public static final int action_settings=0x7f06004b;
         public static final int activity_chooser_view_content=0x7f060025;
         public static final int always=0x7f06000b;
         public static final int beginning=0x7f060011;
-        public static final int button1=0x7f060048;
-        public static final int button2=0x7f060049;
-        public static final int button_capture=0x7f060046;
-        public static final int button_capture_video=0x7f060047;
+        public static final int button1=0x7f060049;
+        public static final int button2=0x7f06004a;
+        public static final int button_capture=0x7f060047;
+        public static final int button_capture_video=0x7f060048;
         public static final int camera_preview=0x7f06003e;
         public static final int capture_info=0x7f060040;
         public static final int capture_info_delaytime=0x7f06003f;
+        public static final int capture_picture_count=0x7f060041;
         public static final int checkbox=0x7f06002d;
         public static final int collapseActionView=0x7f06000d;
         public static final int container=0x7f06003c;
@@ -1125,10 +1126,10 @@ containing a value of this type.
         public static final int icon=0x7f06002a;
         public static final int ifRoom=0x7f06000a;
         public static final int image=0x7f060027;
-        public static final int layout_button=0x7f060045;
+        public static final int layout_button=0x7f060046;
         public static final int listMode=0x7f060001;
         public static final int list_item=0x7f060029;
-        public static final int loadingProgress=0x7f060044;
+        public static final int loadingProgress=0x7f060045;
         public static final int middle=0x7f060012;
         public static final int never=0x7f060009;
         public static final int none=0x7f060010;
@@ -1159,9 +1160,9 @@ containing a value of this type.
         public static final int up=0x7f060021;
         public static final int useLogo=0x7f060003;
         public static final int withText=0x7f06000c;
-        public static final int zoomIn=0x7f060043;
-        public static final int zoomOut=0x7f060042;
-        public static final int zoom_info=0x7f060041;
+        public static final int zoomIn=0x7f060044;
+        public static final int zoomOut=0x7f060043;
+        public static final int zoom_info=0x7f060042;
     }
     public static final class integer {
         /**  The maximum number of action buttons that should be permitted within
@@ -1221,6 +1222,9 @@ containing a value of this type.
         public static final int video__capture__main=0x7f0e0000;
     }
     public static final class string {
+        /**  null string use for software 
+         */
+        public static final int NULL=0x7f0b001a;
         /**  Content description for the action bar "home" affordance. [CHAR LIMIT=NONE] 
          */
         public static final int abc_action_bar_home_description=0x7f0b0001;
@@ -1273,34 +1277,34 @@ containing a value of this type.
         public static final int hello_world=0x7f0b000e;
         /**  Capture Video Quility settings 
          */
-        public static final int pref_capture_picture_quility_header=0x7f0b0024;
-        public static final int pref_capture_time_dialog_title=0x7f0b0021;
+        public static final int pref_capture_picture_quility_header=0x7f0b0025;
+        public static final int pref_capture_time_dialog_title=0x7f0b0022;
         /**  Capture Video time settings 
          */
-        public static final int pref_capture_time_title=0x7f0b0020;
+        public static final int pref_capture_time_title=0x7f0b0021;
         /**  Capture Video Quility settings 
          */
-        public static final int pref_capture_video_quility_header=0x7f0b0023;
-        public static final int pref_default_capture_time=0x7f0b0022;
-        public static final int pref_default_start_capture_time=0x7f0b001f;
+        public static final int pref_capture_video_quility_header=0x7f0b0024;
+        public static final int pref_default_capture_time=0x7f0b0023;
+        public static final int pref_default_start_capture_time=0x7f0b0020;
         public static final int pref_focusMode=0x7f0b0014;
         public static final int pref_focusModeTitle=0x7f0b0015;
         public static final int pref_focusModeTitle_default=0x7f0b0016;
-        public static final int pref_screen_always_on_recommendations=0x7f0b001c;
+        public static final int pref_screen_always_on_recommendations=0x7f0b001d;
         /**  Strings related to Settings 
  Example General settings 
  Screen on settings 
          */
-        public static final int pref_screen_always_on_setting=0x7f0b001b;
-        public static final int pref_start_capture_time_dialog_title=0x7f0b001e;
+        public static final int pref_screen_always_on_setting=0x7f0b001c;
+        public static final int pref_start_capture_time_dialog_title=0x7f0b001f;
         /**  Capture Video delay to start settings 
          */
-        public static final int pref_start_capture_time_title=0x7f0b001d;
+        public static final int pref_start_capture_time_title=0x7f0b001e;
         /**  Video focus suport setting 
          */
-        public static final int pref_video_focus_support_recommendations=0x7f0b0025;
-        public static final int pref_video_focus_support_setting=0x7f0b0026;
-        public static final int title_activity_settings=0x7f0b001a;
+        public static final int pref_video_focus_support_recommendations=0x7f0b0026;
+        public static final int pref_video_focus_support_setting=0x7f0b0027;
+        public static final int title_activity_settings=0x7f0b001b;
     }
     public static final class style {
         /** 
